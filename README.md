@@ -7,6 +7,8 @@ Fetch your Humboldt University mensa schedule right from your CLI!
 * parse unreadable `pdftotext` output
   * `pdftotext` to yaml
   * yaml to X
+* alternatively: scrape website
+  * parse to yaml
 * add command line arguments for maximum customizability
   * language (de, en)
   * minimum / maximum price
