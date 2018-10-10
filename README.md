@@ -1,9 +1,9 @@
 # menstruation
-Schluss mit Frustration, _regel_ dein Essen mit `menstruation`!
+Schluss mit Frustration! _Regel_ dein Essen mit `menstruation`!
 
 ## Beispiel
 
-Stell dir vor, du möchtest wissen, was es heute in der Mensa gibt. Du möchtest
+Stell dir vor, du möchtest wissen, was es heute in deiner HU-Mensa gibt. Du möchtest
 aber weder
 
 * die Wochenplan-PDF herunterladen müssen, noch
