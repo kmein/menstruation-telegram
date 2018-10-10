@@ -1,0 +1,17 @@
+- url: /vendor/infomax/mensen/icons/15.png
+  name: vegan
+- url: /vendor/infomax/mensen/icons/1.png
+  name: vegetarian
+- url: /vendor/infomax/mensen/icons/18.png
+  name: organic
+- url: /vendor/infomax/mensen/icons/43.png
+  name: climate
+- url: /vendor/infomax/mensen/icons/38.png?v=20181001
+  name: sustainable fishing
+
+- url: /vendor/infomax/mensen/icons/ampel_gruen_70x65.png
+  name: green
+- url: /vendor/infomax/mensen/icons/ampel_gelb_70x65.png
+  name: yellow
+- url: /vendor/infomax/mensen/icons/ampel_rot_70x65.png
+  name: red
