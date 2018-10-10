@@ -1,15 +1,10 @@
-with import <nixpkgs> {};
-stdenv.mkDerivation {
+{ pkgs ? import <nixpkgs> {} }:
+let python = import ./requirements.nix { inherit pkgs; };
+in pkgs.stdenv.mkDerivation {
   name = "menstruation";
   buildInputs = with pkgs; [
-    libxml2 libxslt
     jq
     python36Packages.termcolor
+    python.packages."gdom"
   ];
-  shellHook = ''
-    set -f
-    test -e venv || python -m venv venv
-    source venv/bin/activate
-    pip install gdom
-  '';
 }

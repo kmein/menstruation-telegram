@@ -1,0 +1,19 @@
+{
+  page(url: "https://www.stw.berlin/mensen/mensa-hu-oase-adlershof.html") {
+    groups: query(selector: "div.splGroupWrapper") {
+      name: text(selector: "div.splGroup")
+      meals: query(selector: "div.splMeal") {
+        icons: query(selector: "img.splIcon") {
+          src: attr(name: "src")
+        }
+        name: text(selector: "span.bold")
+        allergens: query(selector: "table.tooltip_content tr") {
+          allergen: query(selector: "td") {
+            value: text
+          }
+        }
+        price: text(selector: "div.text-right")
+      }
+    }
+  }
+}
