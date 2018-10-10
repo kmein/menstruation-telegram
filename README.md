@@ -11,7 +11,8 @@ aber weder
 * Fleisch essen, noch
 * mehr als 3 € bezahlen.
 
-Was lange als unmöglich galt, ist nun bloß einen Befehl entfernt!
+Unmöglich? Denkste!
+All das ist nun bloß _einen_ Befehl entfernt!
 
 ```bash
 $ ./menstruate student --vegetarian --max 3
