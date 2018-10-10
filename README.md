@@ -58,3 +58,6 @@ Im Terminal sind die Angebote darüber hinaus gemäß der Lebensmittelampel eing
 * [GDOM](https://github.com/syrusakbary/gdom)
 * [termcolor](https://pypi.org/pypi/termcolor)
 * [`jq`](https://stedolan.github.io/jq/)
+
+## To-Do
+* Allergien herausfiltern

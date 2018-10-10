@@ -2,6 +2,7 @@ from termcolor import colored, cprint
 import argparse
 import json
 import locale
+import itertools
 import sys
 
 locale.setlocale(locale.LC_ALL, 'de_DE')
@@ -25,33 +26,31 @@ def display_meal(meal, perspective):
     else:
         print()
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="menstruate")
     parser.add_argument("perspective", choices=["student", "employee", "guest"], help="Select the price category")
-    parser.add_argument("--vegetarian", help="Show vegetarian offers", dest='flags', action='append_const', const="vegetarian")
-    parser.add_argument("--vegan", help="Show vegan offers", dest='flags', action='append_const', const="vegan")
-    parser.add_argument("--organic", help="Show organic offers (BIO)", dest='flags', action='append_const', const="organic")
-    parser.add_argument("--green", help="Show healthy offers", dest='flags', action='append_const', const="green")
-    parser.add_argument("--yellow", help="Show semi-healthy offers", dest='flags', action='append_const', const="yellow")
-    parser.add_argument("--red", help="Show unhealthy offers", dest='flags', action='append_const', const="red")
-    parser.add_argument("--climate", help="Show climate-friendly offers", dest='flags', action='append_const', const="climate")
-    parser.add_argument("--min", metavar="EUR", type=float, help="Only show offers above EUR euros", default=0)
-    parser.add_argument("--max", metavar="EUR", type=float, help="Only show offers below EUR euros", default=float("inf"))
+    parser.add_argument("-v", "--vegetarian", dest="restrictions", action="append_const", const=["vegetarian", "vegan"], help="Show vegetarian offers (implies vegan)")
+    parser.add_argument("-V", "--vegan", dest="restrictions", action="append_const", const=["vegan"], help="Show vegan offers")
+    parser.add_argument("-o", "--organic", dest="restrictions", action="append_const", const=["organic"], help="Show organic offers (BIO)")
+    parser.add_argument("-c", "--climate", dest="restrictions", action="append_const", const=["climate"], help="Show climate-friendly offers")
+    parser.add_argument("-g", "--green", dest="health", action="append_const", const="green", help="Show healthy offers")
+    parser.add_argument("-y", "--yellow", dest="health", action="append_const", const="yellow", help="Show semi-healthy offers")
+    parser.add_argument("-r", "--red", dest="health", action="append_const", const="red", help="Show unhealthy offers")
+    parser.add_argument("--min", metavar="EUR", type=float, default=0, help="Only show offers above EUR euros")
+    parser.add_argument("--max", metavar="EUR", type=float, default=float("inf"), help="Only show offers below EUR euros")
     args = parser.parse_args()
 
-    # all vegan offers are automatically vegetarian
-    if "vegetarian" in args.flags:
-        args.flags.append("vegan")
+    restrictions = set(sum(args.restrictions, [])) if args.restrictions else set()
 
     json_source = sys.stdin.read()
     json_object = json.loads(json_source)
     for group in json_object["groups"]:
         cprint(9 * " " + group["name"].upper(), attrs=["bold"])
         for meal in group["meals"]:
-            if not args.flags or set(args.flags) & set(meal["tags"]):
-                price = meal["price"][args.perspective]
-                if price >= args.min and price <= args.max:
-                    display_meal(meal, args.perspective)
+            if not args.health or set(args.health) & set(meal["tags"]):
+                if not restrictions or restrictions & set(meal["tags"]):
+                    price = meal["price"][args.perspective]
+                    if price >= args.min and price <= args.max:
+                        display_meal(meal, args.perspective)
         print()
 
