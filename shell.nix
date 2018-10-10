@@ -3,6 +3,8 @@ stdenv.mkDerivation {
   name = "menstruation";
   buildInputs = with pkgs; [
     libxml2 libxslt
+    jq
+    python36Packages.termcolor
   ];
   shellHook = ''
     set -f

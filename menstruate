@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+GRAPHQL_QUERY=$(cat <<GDOM
+{
+  page(url: "https://www.stw.berlin/mensen/mensa-hu-oase-adlershof.html") {
+    groups: query(selector: "div.splGroupWrapper") {
+      name: text(selector: "div.splGroup")
+      meals: query(selector: "div.splMeal") {
+        icons: query(selector: "img.splIcon") {
+          src: attr(name: "src")
+        }
+        name: text(selector: "span.bold")
+        allergens: query(selector: "table.tooltip_content tr") {
+          allergen: query(selector: "td") {
+            value: text
+          }
+        }
+        price: text(selector: "div.text-right")
+      }
+    }
+  }
+}
+GDOM
+)
+
+JSON_QUERY=$(cat <<JQ
+.data.page | {
+  groups: .groups | map({
+    name: .name,
+    meals: .meals | map({
+      name: .name,
+      price: .price | ltrimstr("€ ") | gsub(","; ".") | split("/") | map(tonumber) | {
+        student: .[0],
+        employee: .[1],
+        guest: .[2]
+      },
+      tags: .icons | map(
+        if .src == "/vendor/infomax/mensen/icons/1.png" then "vegetarian"
+        elif .src == "/vendor/infomax/mensen/icons/15.png" then "vegan"
+        elif .src == "/vendor/infomax/mensen/icons/18.png" then "organic"
+        elif .src == "/vendor/infomax/mensen/icons/38.png" then "sustainable fishing"
+        elif .src == "/vendor/infomax/mensen/icons/43.png" then "climate"
+        elif .src == "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png" then "yellow"
+        elif .src == "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png" then "green"
+        elif .src == "/vendor/infomax/mensen/icons/ampel_rot_70x65.png" then "red"
+        else .src
+        end),
+      allergens: .allergens | map({
+        allergen: {
+          code: .allergen | .[0].value,
+          name: .allergen | .[1].value
+        }
+      })
+    })
+  })
+}
+JQ
+)
+
+cat example.json | jq "$JSON_QUERY" | python3 frontend.py $*

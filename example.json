@@ -19,30 +19,30 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "23"
+                      "value": "23"
                     },
                     {
-                      "val": "Eier"
+                      "value": "Eier"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -65,10 +65,10 @@
                 {
                   "allergen": [
                     {
-                      "val": "32"
+                      "value": "32"
                     },
                     {
-                      "val": "Schwefeldioxid und Sulfide"
+                      "value": "Schwefeldioxid und Sulfide"
                     }
                   ]
                 }
@@ -89,20 +89,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "13"
+                      "value": "13"
                     },
                     {
-                      "val": "Süßungsmittel"
+                      "value": "Süßungsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 }
@@ -136,20 +136,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "13"
+                      "value": "13"
                     },
                     {
-                      "val": "Süßungsmittel"
+                      "value": "Süßungsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 }
@@ -175,20 +175,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "28"
+                      "value": "28"
                     },
                     {
-                      "val": "Soja"
+                      "value": "Soja"
                     }
                   ]
                 }
@@ -211,30 +211,30 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "23"
+                      "value": "23"
                     },
                     {
-                      "val": "Eier"
+                      "value": "Eier"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -255,30 +255,30 @@
                 {
                   "allergen": [
                     {
-                      "val": "7"
+                      "value": "7"
                     },
                     {
-                      "val": "Antioxidationsmittel"
+                      "value": "Antioxidationsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 }
@@ -299,30 +299,30 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "36"
+                      "value": "36"
                     },
                     {
-                      "val": "Hefe"
+                      "value": "Hefe"
                     }
                   ]
                 }
@@ -343,40 +343,40 @@
                 {
                   "allergen": [
                     {
-                      "val": "7"
+                      "value": "7"
                     },
                     {
-                      "val": "Antioxidationsmittel"
+                      "value": "Antioxidationsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "23"
+                      "value": "23"
                     },
                     {
-                      "val": "Eier"
+                      "value": "Eier"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -402,20 +402,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 }
@@ -439,20 +439,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "28"
+                      "value": "28"
                     },
                     {
-                      "val": "Soja"
+                      "value": "Soja"
                     }
                   ]
                 }
@@ -473,40 +473,40 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "31"
+                      "value": "31"
                     },
                     {
-                      "val": "Sesam"
+                      "value": "Sesam"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "36"
+                      "value": "36"
                     },
                     {
-                      "val": "Hefe"
+                      "value": "Hefe"
                     }
                   ]
                 }
@@ -527,70 +527,70 @@
                 {
                   "allergen": [
                     {
-                      "val": "7"
+                      "value": "7"
                     },
                     {
-                      "val": "Antioxidationsmittel"
+                      "value": "Antioxidationsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "28"
+                      "value": "28"
                     },
                     {
-                      "val": "Soja"
+                      "value": "Soja"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "31"
+                      "value": "31"
                     },
                     {
-                      "val": "Sesam"
+                      "value": "Sesam"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "36"
+                      "value": "36"
                     },
                     {
-                      "val": "Hefe"
+                      "value": "Hefe"
                     }
                   ]
                 }
@@ -611,30 +611,30 @@
                 {
                   "allergen": [
                     {
-                      "val": "7"
+                      "value": "7"
                     },
                     {
-                      "val": "Antioxidationsmittel"
+                      "value": "Antioxidationsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "8"
+                      "value": "8"
                     },
                     {
-                      "val": "Farbstoff"
+                      "value": "Farbstoff"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "28"
+                      "value": "28"
                     },
                     {
-                      "val": "Soja"
+                      "value": "Soja"
                     }
                   ]
                 }
@@ -652,40 +652,40 @@
                 {
                   "allergen": [
                     {
-                      "val": "6"
+                      "value": "6"
                     },
                     {
-                      "val": "konserviert"
+                      "value": "konserviert"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "23"
+                      "value": "23"
                     },
                     {
-                      "val": "Eier"
+                      "value": "Eier"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "27"
+                      "value": "27"
                     },
                     {
-                      "val": "Sellerie"
+                      "value": "Sellerie"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -727,10 +727,10 @@
                 {
                   "allergen": [
                     {
-                      "val": "21a"
+                      "value": "21a"
                     },
                     {
-                      "val": "Weizen"
+                      "value": "Weizen"
                     }
                   ]
                 }
@@ -793,10 +793,10 @@
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -817,20 +817,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "7"
+                      "value": "7"
                     },
                     {
-                      "val": "Antioxidationsmittel"
+                      "value": "Antioxidationsmittel"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "28"
+                      "value": "28"
                     },
                     {
-                      "val": "Soja"
+                      "value": "Soja"
                     }
                   ]
                 }
@@ -856,10 +856,10 @@
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -880,10 +880,10 @@
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
@@ -904,20 +904,20 @@
                 {
                   "allergen": [
                     {
-                      "val": "26g"
+                      "value": "26g"
                     },
                     {
-                      "val": "Pistazie"
+                      "value": "Pistazie"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "val": "30"
+                      "value": "30"
                     },
                     {
-                      "val": "Milch und Milchprodukte (inkl. Laktose)"
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
                     }
                   ]
                 }
