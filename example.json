@@ -164,31 +164,58 @@
             {
               "icons": [
                 {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
+                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
                 }
               ],
-              "name": "Vegane Cremesuppe mit Gartengemüse",
+              "name": "Deftige Krautsuppe mit Wurstscheiben",
               "allergens": [
                 {
                   "allergen": [
                     {
-                      "value": "27"
+                      "value": "2"
                     },
                     {
-                      "value": "Sellerie"
+                      "value": "Schweinefleisch bzw. mit Gelatine vom Schwein"
                     }
                   ]
                 },
                 {
                   "allergen": [
                     {
-                      "value": "28"
+                      "value": "6"
                     },
                     {
-                      "value": "Soja"
+                      "value": "konserviert"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "7"
+                    },
+                    {
+                      "value": "Antioxidationsmittel"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "30"
+                    },
+                    {
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "35"
+                    },
+                    {
+                      "value": "Nitritpökelsalz"
                     }
                   ]
                 }
@@ -204,9 +231,12 @@
               "icons": [
                 {
                   "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/1.png"
                 }
               ],
-              "name": "Gebratenes Hähnchenbrustfilet an Pfeffersauce, gebackenen Spiralkartoffeln und Salat",
+              "name": "Käsesauce mit Haselnüssen an Nudelauswahl",
               "allergens": [
                 {
                   "allergen": [
@@ -221,10 +251,10 @@
                 {
                   "allergen": [
                     {
-                      "value": "23"
+                      "value": "26b"
                     },
                     {
-                      "value": "Eier"
+                      "value": "Haselnuss"
                     }
                   ]
                 },
@@ -235,50 +265,6 @@
                     },
                     {
                       "value": "Milch und Milchprodukte (inkl. Laktose)"
-                    }
-                  ]
-                }
-              ],
-              "price": "€ 5,95/6,55/7,15"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
-                }
-              ],
-              "name": "Tomatensauce mit Artischocken an Nudelauswahl",
-              "allergens": [
-                {
-                  "allergen": [
-                    {
-                      "value": "7"
-                    },
-                    {
-                      "value": "Antioxidationsmittel"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "21a"
-                    },
-                    {
-                      "value": "Weizen"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "27"
-                    },
-                    {
-                      "value": "Sellerie"
                     }
                   ]
                 }
@@ -382,6 +368,67 @@
                 }
               ],
               "price": "€ 0,70/0,75/0,85"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                }
+              ],
+              "name": "Rindergeschnetzeltes Stroganoff Art mit Kräuterspätzle",
+              "allergens": [
+                {
+                  "allergen": [
+                    {
+                      "value": "6"
+                    },
+                    {
+                      "value": "konserviert"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "13"
+                    },
+                    {
+                      "value": "Süßungsmittel"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "21a"
+                    },
+                    {
+                      "value": "Weizen"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "23"
+                    },
+                    {
+                      "value": "Eier"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "30"
+                    },
+                    {
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
+                    }
+                  ]
+                }
+              ],
+              "price": "€ 5,95/6,55/7,15"
             }
           ]
         },
@@ -394,10 +441,13 @@
                   "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
                 },
                 {
+                  "src": "/vendor/infomax/mensen/icons/15.png"
+                },
+                {
                   "src": "/vendor/infomax/mensen/icons/18.png"
                 }
               ],
-              "name": "Eine Scheibe geschmorte Rinderkeule an Bratensauce",
+              "name": "Tortelloni Arrabiata an Chili-Curry-Sauce",
               "allergens": [
                 {
                   "allergen": [
@@ -412,10 +462,10 @@
                 {
                   "allergen": [
                     {
-                      "value": "27"
+                      "value": "29"
                     },
                     {
-                      "value": "Sellerie"
+                      "value": "Senf"
                     }
                   ]
                 }
@@ -434,179 +484,7 @@
                   "src": "/vendor/infomax/mensen/icons/43.png"
                 }
               ],
-              "name": "Sonnenweizen mit frischer Zucchini, Paprika, und Karotten",
-              "allergens": [
-                {
-                  "allergen": [
-                    {
-                      "value": "21a"
-                    },
-                    {
-                      "value": "Weizen"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "28"
-                    },
-                    {
-                      "value": "Soja"
-                    }
-                  ]
-                }
-              ],
-              "price": "€ 2,10/4,20/4,60"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/38.png"
-                }
-              ],
-              "name": "Ein Seelachsfilet in Sesampanade an Joghurt-Limonen-Dip",
-              "allergens": [
-                {
-                  "allergen": [
-                    {
-                      "value": "21a"
-                    },
-                    {
-                      "value": "Weizen"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "30"
-                    },
-                    {
-                      "value": "Milch und Milchprodukte (inkl. Laktose)"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "31"
-                    },
-                    {
-                      "value": "Sesam"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "36"
-                    },
-                    {
-                      "value": "Hefe"
-                    }
-                  ]
-                }
-              ],
-              "price": "€ 1,75/3,50/3,85"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/1.png"
-                }
-              ],
-              "name": "Zwei Schwarzwurzelmedaillons an Curry-Mango-Sauce",
-              "allergens": [
-                {
-                  "allergen": [
-                    {
-                      "value": "7"
-                    },
-                    {
-                      "value": "Antioxidationsmittel"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "21a"
-                    },
-                    {
-                      "value": "Weizen"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "27"
-                    },
-                    {
-                      "value": "Sellerie"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "28"
-                    },
-                    {
-                      "value": "Soja"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "30"
-                    },
-                    {
-                      "value": "Milch und Milchprodukte (inkl. Laktose)"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "31"
-                    },
-                    {
-                      "value": "Sesam"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "36"
-                    },
-                    {
-                      "value": "Hefe"
-                    }
-                  ]
-                }
-              ],
-              "price": "€ 1,55/3,10/3,40"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
-                }
-              ],
-              "name": "Ein Kürbis-Chiasamen-Bratling an Curry-Mango-Sauce",
+              "name": "Brokkoli-Nudel-Pfanne mit Tofu, Tomaten und Haselnüssen",
               "allergens": [
                 {
                   "allergen": [
@@ -631,31 +509,71 @@
                 {
                   "allergen": [
                     {
+                      "value": "21a"
+                    },
+                    {
+                      "value": "Weizen"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "26b"
+                    },
+                    {
+                      "value": "Haselnuss"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
                       "value": "28"
                     },
                     {
                       "value": "Soja"
                     }
                   ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "32"
+                    },
+                    {
+                      "value": "Schwefeldioxid und Sulfide"
+                    }
+                  ]
                 }
               ],
-              "price": "€ 1,55/3,10/3,40"
+              "price": "€ 2,10/4,20/4,60"
             },
             {
               "icons": [
                 {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                  "src": "/vendor/infomax/mensen/icons/ampel_rot_70x65.png"
                 }
               ],
-              "name": "Tessiner Pilzrisotto mit Petersilie",
+              "name": "Eine gebratene Lammfrikadelle an Rosmarinsauce",
               "allergens": [
                 {
                   "allergen": [
                     {
-                      "value": "6"
+                      "value": "14"
                     },
                     {
-                      "value": "konserviert"
+                      "value": "mit zum Teil fein zerkleinertem Fleischanteil"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "21a"
+                    },
+                    {
+                      "value": "Weizen"
                     }
                   ]
                 },
@@ -682,6 +600,91 @@
                 {
                   "allergen": [
                     {
+                      "value": "36"
+                    },
+                    {
+                      "value": "Hefe"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "29"
+                    },
+                    {
+                      "value": "Senf"
+                    }
+                  ]
+                }
+              ],
+              "price": "€ 1,95/3,90/4,30"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
+                }
+              ],
+              "name": "Hähnchenbruststreifen nach asiatischer Art mit Gemüse und Ananas",
+              "allergens": [
+                {
+                  "allergen": [
+                    {
+                      "value": "6"
+                    },
+                    {
+                      "value": "konserviert"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "28"
+                    },
+                    {
+                      "value": "Soja"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "32"
+                    },
+                    {
+                      "value": "Schwefeldioxid und Sulfide"
+                    }
+                  ]
+                }
+              ],
+              "price": "€ 1,75/3,50/3,85"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/1.png"
+                }
+              ],
+              "name": "Sahniger Milchreis mit Zimt, Zucker und Rhabarber-Himbeer-Sauce",
+              "allergens": [
+                {
+                  "allergen": [
+                    {
+                      "value": "8"
+                    },
+                    {
+                      "value": "Farbstoff"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
                       "value": "30"
                     },
                     {
@@ -691,6 +694,40 @@
                 }
               ],
               "price": "€ 1,45/2,90/3,20"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/1.png"
+                }
+              ],
+              "name": "Kleiner Milchreis mit Zimt, Zucker und Rhabarber-Himbeer-Sauce",
+              "allergens": [
+                {
+                  "allergen": [
+                    {
+                      "value": "8"
+                    },
+                    {
+                      "value": "Farbstoff"
+                    }
+                  ]
+                },
+                {
+                  "allergen": [
+                    {
+                      "value": "30"
+                    },
+                    {
+                      "value": "Milch und Milchprodukte (inkl. Laktose)"
+                    }
+                  ]
+                }
+              ],
+              "price": "€ 0,90/1,80/2,00"
             }
           ]
         },
@@ -706,8 +743,58 @@
                   "src": "/vendor/infomax/mensen/icons/15.png"
                 }
               ],
-              "name": "Romanesco",
+              "name": "Rosenkohl mit Zwiebeln",
               "allergens": [],
+              "price": "€ 0,60/1,20/1,30"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/15.png"
+                }
+              ],
+              "name": "Erbsen-Mais-Gemüse",
+              "allergens": [],
+              "price": "€ 0,60/1,20/1,30"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/15.png"
+                }
+              ],
+              "name": "Backkartoffeln",
+              "allergens": [],
+              "price": "€ 0,75/1,50/1,65"
+            },
+            {
+              "icons": [
+                {
+                  "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
+                },
+                {
+                  "src": "/vendor/infomax/mensen/icons/15.png"
+                }
+              ],
+              "name": "Reis mit Grünkern",
+              "allergens": [
+                {
+                  "allergen": [
+                    {
+                      "value": "21e"
+                    },
+                    {
+                      "value": "Dinkel"
+                    }
+                  ]
+                }
+              ],
               "price": "€ 0,60/1,20/1,30"
             },
             {
@@ -722,7 +809,7 @@
                   "src": "/vendor/infomax/mensen/icons/18.png"
                 }
               ],
-              "name": "Spiralnudeln",
+              "name": "Chili-Curry-Sauce",
               "allergens": [
                 {
                   "allergen": [
@@ -733,104 +820,35 @@
                       "value": "Weizen"
                     }
                   ]
-                }
-              ],
-              "price": "€ 0,65/1,30/1,45"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
                 },
                 {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/18.png"
+                  "allergen": [
+                    {
+                      "value": "29"
+                    },
+                    {
+                      "value": "Senf"
+                    }
+                  ]
                 }
               ],
-              "name": "Grüne Bohnen",
-              "allergens": [],
-              "price": "€ 0,65/1,30/1,45"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
-                }
-              ],
-              "name": "Salzkartoffeln",
-              "allergens": [],
-              "price": "€ 0,60/1,20/1,30"
+              "price": "€ 0,35/0,70/0,75"
             },
             {
               "icons": [
                 {
                   "src": "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
                 }
               ],
-              "name": "Parboiledreis",
-              "allergens": [],
-              "price": "€ 0,60/1,20/1,30"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/1.png"
-                }
-              ],
-              "name": "Joghurt-Limonen-Dip",
+              "name": "Rosmarinsauce",
               "allergens": [
                 {
                   "allergen": [
                     {
-                      "value": "30"
+                      "value": "29"
                     },
                     {
-                      "value": "Milch und Milchprodukte (inkl. Laktose)"
-                    }
-                  ]
-                }
-              ],
-              "price": "€ 0,30/0,60/0,65"
-            },
-            {
-              "icons": [
-                {
-                  "src": "/vendor/infomax/mensen/icons/ampel_rot_70x65.png"
-                },
-                {
-                  "src": "/vendor/infomax/mensen/icons/15.png"
-                }
-              ],
-              "name": "Curry-Mango-Sauce",
-              "allergens": [
-                {
-                  "allergen": [
-                    {
-                      "value": "7"
-                    },
-                    {
-                      "value": "Antioxidationsmittel"
-                    }
-                  ]
-                },
-                {
-                  "allergen": [
-                    {
-                      "value": "28"
-                    },
-                    {
-                      "value": "Soja"
+                      "value": "Senf"
                     }
                   ]
                 }
@@ -851,7 +869,7 @@
                   "src": "/vendor/infomax/mensen/icons/1.png"
                 }
               ],
-              "name": "Aprikosenjoghurt",
+              "name": "Brombeerjoghurt",
               "allergens": [
                 {
                   "allergen": [
@@ -875,7 +893,7 @@
                   "src": "/vendor/infomax/mensen/icons/1.png"
                 }
               ],
-              "name": "Johannisbeerquark",
+              "name": "Heidelbeerquark",
               "allergens": [
                 {
                   "allergen": [
@@ -899,15 +917,15 @@
                   "src": "/vendor/infomax/mensen/icons/1.png"
                 }
               ],
-              "name": "Pistazienpudding",
+              "name": "Haselnusspudding",
               "allergens": [
                 {
                   "allergen": [
                     {
-                      "value": "26g"
+                      "value": "26b"
                     },
                     {
-                      "value": "Pistazie"
+                      "value": "Haselnuss"
                     }
                   ]
                 },

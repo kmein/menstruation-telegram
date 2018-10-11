@@ -311,6 +311,23 @@ let
       };
     };
 
+    /*
+    "jq" = python.mkDerivation {
+      name = "jq-0.1.6";
+      src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/82/0c/bf3f544f850cef19f4468bea93e4d0aa908e0d8c601609ba1ed561b42c79/jq-0.1.6.tar.gz"; sha256 = "34bdf9f9e49e522e1790afc03f3584c6b57329215ea0567fb2157867d6d6f602"; };
+      doCheck = commonDoCheck;
+      checkPhase = "";
+      installCheckPhase = "";
+      buildInputs = with pkgs; [ autoconf automake libtool ];
+      propagatedBuildInputs = [ ];
+      meta = with pkgs.stdenv.lib; {
+        homepage = "http://github.com/mwilliamson/jq.py";
+        license = licenses.bsdOriginal;
+        description = "jq is a lightweight and flexible JSON processor.";
+      };
+    };
+    */
+
     "lxml" = python.mkDerivation {
       name = "lxml-4.2.5";
       src = pkgs.fetchurl { url = "https://files.pythonhosted.org/packages/4b/20/ddf5eb3bd5c57582d2b4652b4bbcf8da301bdfe5d805cb94e805f4d7464d/lxml-4.2.5.tar.gz"; sha256 = "36720698c29e7a9626a0dc802ef8885f8f0239bfd1689628ecd459a061f2807f"; };
