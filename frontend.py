@@ -1,45 +1,12 @@
-from jq import jq
 from termcolor import colored, cprint
 from itertools import chain
 import argparse
 import itertools
+import json
 import locale
 import sys
 
 locale.setlocale(locale.LC_ALL, 'de_DE')
-
-JQ_QUERY = """
-.data.page | {
-  groups: .groups | map({
-    name: .name,
-    meals: .meals | map({
-      name: .name,
-      price: .price | ltrimstr("€ ") | gsub(","; ".") | split("/") | map(tonumber) | {
-        student: .[0],
-        employee: .[1],
-        guest: .[2]
-      },
-      tags: .icons | map(
-        if .src == "/vendor/infomax/mensen/icons/1.png" then "vegetarian"
-        elif .src == "/vendor/infomax/mensen/icons/15.png" then "vegan"
-        elif .src == "/vendor/infomax/mensen/icons/18.png" then "organic"
-        elif .src == "/vendor/infomax/mensen/icons/38.png" then "sustainable fishing"
-        elif .src == "/vendor/infomax/mensen/icons/43.png" then "climate"
-        elif .src == "/vendor/infomax/mensen/icons/ampel_gelb_70x65.png" then "yellow"
-        elif .src == "/vendor/infomax/mensen/icons/ampel_gruen_70x65.png" then "green"
-        elif .src == "/vendor/infomax/mensen/icons/ampel_rot_70x65.png" then "red"
-        else .src
-        end),
-      allergens: .allergens | map({
-        allergen: {
-          code: .allergen | .[0].value,
-          name: .allergen | .[1].value
-        }
-      })
-    })
-  })
-}
-"""
 
 def display_meal(meal, perspective):
     assert perspective in ("student", "employee", "guest")
@@ -78,7 +45,7 @@ if __name__ == "__main__":
     restrictions = set(chain.from_iterable(args.restrictions)) if args.restrictions else set()
 
     json_source = sys.stdin.read()
-    json_object = jq(JQ_QUERY).transform(text=json_source)
+    json_object = json.loads(json_source)
     for group in json_object["groups"]:
         cprint(9 * " " + group["name"].upper(), attrs=["bold"])
         for meal in group["meals"]:
