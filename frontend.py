@@ -6,7 +6,7 @@ import json
 import locale
 import sys
 
-locale.setlocale(locale.LC_ALL, 'de_DE')
+locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
 
 def display_meal(meal, perspective):
     assert perspective in ("student", "employee", "guest")
@@ -46,8 +46,11 @@ if __name__ == "__main__":
 
     json_source = sys.stdin.read()
     json_object = json.loads(json_source)
+
+    group_indent_length = len(locale.currency(1.23)) + 1
+
     for group in json_object["groups"]:
-        cprint(9 * " " + group["name"].upper(), attrs=["bold"])
+        cprint(group_indent_length * " " + group["name"].upper(), attrs=["bold"])
         for meal in group["meals"]:
             if not args.health or set(args.health) & set(meal["tags"]):
                 if not restrictions or restrictions & set(meal["tags"]):
