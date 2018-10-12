@@ -1,0 +1,3 @@
+gdom
+jq
+termcolor
