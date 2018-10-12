@@ -1,15 +1,35 @@
 #!/usr/bin/env python3
 from itertools import chain
 from jq import jq
-from subprocess import call
+from subprocess import run
 from tempfile import NamedTemporaryFile
-from termcolor import colored, cprint
+from termcolor import cprint
 import argparse
-import itertools
 import locale
-import sys
 
 locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+
+GDOM_QUERY = """
+query ($page: String) {
+  page(url: $page) {
+    groups: query(selector: "div.splGroupWrapper") {
+      name: text(selector: "div.splGroup")
+      meals: query(selector: "div.splMeal") {
+        icons: query(selector: "img.splIcon") {
+          src: attr(name: "src")
+        }
+        name: text(selector: "span.bold")
+        allergens: query(selector: "table.tooltip_content tr") {
+          allergen: query(selector: "td") {
+            value: text
+          }
+        }
+        price: text(selector: "div.text-right")
+      }
+    }
+  }
+}
+"""
 
 JSON_QUERY = """
 .data.page | {
@@ -44,29 +64,8 @@ JSON_QUERY = """
 }
 """
 
-GDOM_QUERY = """
-query ($page: String) {
-  page(url: $page) {
-    groups: query(selector: "div.splGroupWrapper") {
-      name: text(selector: "div.splGroup")
-      meals: query(selector: "div.splMeal") {
-        icons: query(selector: "img.splIcon") {
-          src: attr(name: "src")
-        }
-        name: text(selector: "span.bold")
-        allergens: query(selector: "table.tooltip_content tr") {
-          allergen: query(selector: "td") {
-            value: text
-          }
-        }
-        price: text(selector: "div.text-right")
-      }
-    }
-  }
-}
-"""
-
 mensa_url = "https://www.stw.berlin/mensen/mensa-hu-oase-adlershof.html"
+
 
 def display_meal(meal, perspective):
     assert perspective in ("student", "employee", "guest")
@@ -87,6 +86,7 @@ def display_meal(meal, perspective):
     else:
         print()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="menstruate")
     parser.add_argument("perspective", choices=["student", "employee", "guest"], nargs="?", default="student", help="Select the price category (default student)")
@@ -106,19 +106,18 @@ if __name__ == "__main__":
 
     with NamedTemporaryFile() as gdom_query_file:
         gdom_query_file.write(GDOM_QUERY)
+        gdom_result = run(["gdom", gdom_query_file.name, mensa_url], capture_output=True).stdout
 
-        json_source = run(["gdom", gdom_query_file.name, mensa_url], capture_output=True).stdout
-        json_object = jq(JSON_QUERY).transform(text=json_source)
+    json_object = jq(JSON_QUERY).transform(text=gdom_result)
 
-        group_indent_length = len(locale.currency(1.23)) + 1
+    group_indent_length = len(locale.currency(1.23)) + 1
 
-        for group in json_object["groups"]:
-            cprint(group_indent_length * " " + group["name"].upper(), attrs=["bold"])
-            for meal in group["meals"]:
-                if not args.health or set(args.health) & set(meal["tags"]):
-                    if not restrictions or restrictions & set(meal["tags"]):
-                        price = meal["price"][args.perspective]
-                        if price >= args.min and price <= args.max:
-                            display_meal(meal, args.perspective)
-            print()
-
+    for group in json_object["groups"]:
+        cprint(group_indent_length * " " + group["name"].upper(), attrs=["bold"])
+        for meal in group["meals"]:
+            if not args.health or set(args.health) & set(meal["tags"]):
+                if not restrictions or restrictions & set(meal["tags"]):
+                    price = meal["price"][args.perspective]
+                    if price >= args.min and price <= args.max:
+                        display_meal(meal, args.perspective)
+        print()
