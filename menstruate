@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from itertools import chain
 from jq import jq
-from subprocess import run
+from subprocess import run, PIPE
 from tempfile import NamedTemporaryFile
 from termcolor import cprint
 import argparse
@@ -104,9 +104,9 @@ if __name__ == "__main__":
     # flatten multiple restrictions
     restrictions = set(chain.from_iterable(args.restrictions)) if args.restrictions else set()
 
-    with NamedTemporaryFile() as gdom_query_file:
+    with NamedTemporaryFile(mode="w") as gdom_query_file:
         gdom_query_file.write(GDOM_QUERY)
-        gdom_result = run(["gdom", gdom_query_file.name, mensa_url], capture_output=True).stdout
+        gdom_result = run(["gdom", gdom_query_file.name, mensa_url], stdout=PIPE).stdout.decode("utf-8")
 
     json_object = jq(JSON_QUERY).transform(text=gdom_result)
 
