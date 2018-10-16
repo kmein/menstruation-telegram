@@ -67,7 +67,7 @@ FLASK_APP=server/backend.py flask run
           "code": "<Code>"
         }
       ],
-      name: "<Uni-Name>"
+      "name": "<Uni-Name>"
     }
   ]
 }
