@@ -1,18 +1,23 @@
 from bs4 import BeautifulSoup
 from datetime import date, datetime
-from enum import Enum
+from flask import Flask, jsonify
 from itertools import tee, filterfalse
-from typing import *
-import json
+from typing import Any, Dict, TypeVar, Callable, Iterable, Tuple, Iterator
 import re
 import requests
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 A = TypeVar("A")
-def partition(pred: Callable[[A], bool], iterable: Iterable[A]) -> Tuple[Iterator[A], Iterator[A]]:
+
+
+def partition(
+    pred: Callable[[A], bool],
+    iterable: Iterable[A]
+) -> Tuple[Iterator[A], Iterator[A]]:
     t1, t2 = tee(iterable)
     return filterfalse(pred, t1), filter(pred, t2)
+
 
 def meals_html_for_day(mensa_code: int, date: date) -> str:
     return requests.post(
@@ -23,6 +28,7 @@ def meals_html_for_day(mensa_code: int, date: date) -> str:
             "date": date.isoformat(),
             "resources_id": mensa_code,
         }).text
+
 
 def icon_to_tag(icon: str) -> str:
     return {
@@ -36,6 +42,7 @@ def icon_to_tag(icon: str) -> str:
         "/vendor/infomax/mensen/icons/ampel_rot_70x65.png": "red",
     }[icon]
 
+
 def extract_meals(html: str) -> Dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
     groups = []
@@ -43,15 +50,19 @@ def extract_meals(html: str) -> Dict[str, Any]:
         group_name = group.find(class_="splGroup").text.strip()
         meals = []
         for meal in group.find_all(class_="splMeal"):
-            icons = [img["src"] for img in meal.find_all("img", class_="splIcon")]
+            icons = [
+                img["src"]
+                for img
+                in meal.find_all("img", class_="splIcon")
+            ]
             tag_icons, color_icons = partition(lambda x: "ampel" in x, icons)
             meal_name = meal.find("span", class_="bold").text.strip()
             student, employee, guest = (
                 float(price)
                 for price
-                in meal.find("div", class_="text-right").text.replace("€ ", "").replace(",", ".").split("/")
+                in meal.find("div", class_="text-right").text .replace("€ ", "").replace(",", ".").split("/")
             )
-            allergen_matches = re.search("\((.*)\)", meal.find(class_="toolt").text)
+            allergen_matches = re.search(r"\((.*)\)", meal.find(class_="toolt").text)
             if allergen_matches:
                 allergens = allergen_matches.group(1).split(", ")
             else:
@@ -73,16 +84,16 @@ def extract_meals(html: str) -> Dict[str, Any]:
         })
     return {"groups": groups}
 
+
 def meals(mensa_code: int, date: date) -> Dict[str, Any]:
     return extract_meals(meals_html_for_day(mensa_code, date))
 
-###
 
-from flask import Flask, jsonify
 app = Flask(__name__)
 
 app.config["JSON_AS_ASCII"] = False
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+
 
 @app.route("/codes")
 def list_codes():
@@ -94,10 +105,11 @@ def list_codes():
         mensas = []
         for mensa in uni.find_all(class_=["row", "row-top-percent-1", "ptr"], onclick=True):
             code = mensa["onclick"][9:12]
-            address = re.sub("\s+", " ", mensa.find(class_="addrcard").text.strip().replace("\n", " /"))
+            address = re.sub(r"\s+", " ", mensa.find(class_="addrcard").text.strip().replace("\n", " /"))
             mensas.append({"code": code, "address": address})
         unis.append({"name": name, "mensas": mensas})
     return jsonify({"unis": unis})
+
 
 @app.route("/<mensa_code>", defaults={"isodate": date.today().isoformat()})
 @app.route("/<mensa_code>/<isodate>")

@@ -2,7 +2,7 @@
 from datetime import date
 from itertools import chain
 from termcolor import cprint
-from typing import *
+from typing import Any, Dict
 import argparse
 import json
 import locale
@@ -11,6 +11,7 @@ import requests
 ENDPOINT = "http://127.0.0.1:5000"
 
 locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+
 
 def display_codes(codes: Dict[str, Any], pattern: str) -> None:
     for uni in codes["unis"]:
