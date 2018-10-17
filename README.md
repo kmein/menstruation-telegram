@@ -101,5 +101,9 @@ FLASK_APP=server/backend.py flask run
 
 TODO
 
+## client-telegram
+
+TODO
+
 ## To-Do
 * [ ] Allergien herausfiltern
