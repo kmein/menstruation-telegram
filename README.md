@@ -82,6 +82,7 @@ FLASK_APP=server/backend.py flask run
       "meals": [
         {
           "allergens": ["<Allergene>"],
+          "color": "<green|yellow|red>",
           "name": "<Essensname>",
           "price": {
             "student": <Studentenpreis>,
