@@ -62,7 +62,6 @@ if __name__ == "__main__":
     list_codes.add_argument("pattern", metavar="PATTERN", nargs="?", help="Search for a specific address")
 
     args = parser.parse_args()
-    print(args)
 
     if args.list_codes:
         json_object = json.loads(requests.get(ENDPOINT + "/codes").text)
