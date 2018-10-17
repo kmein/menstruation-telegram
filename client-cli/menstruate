@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     parameters = parser.add_argument_group("parameters")
     parameters.add_argument("--date", "-d", metavar="YYYY-MM-DD", default=date.today(), nargs="?", help="Show offers for a specific date (default today)")
-    parameters.add_argument("--mensa", "-m", metavar="CODE", nargs="?", default=191, help="Mensa code (obtain with list-codes)")
+    parameters.add_argument("--mensa", "-m", metavar="CODE", nargs="?", default=191, help="Mensa code (obtain with list-codes, default 191 = Adlershof)")
 
     subparsers = parser.add_subparsers(dest="list_codes")
     list_codes = subparsers.add_parser("list-codes", help="List all available mensa codes")
