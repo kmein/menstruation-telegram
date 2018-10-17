@@ -1,11 +1,16 @@
 from bs4 import BeautifulSoup
 from datetime import date, datetime
+from itertools import tee, filterfalse
 from enum import Enum
 import json
 import re
 import requests
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+def partition(pred, iterable):
+    t1, t2 = tee(iterable)
+    return filterfalse(pred, t1), filter(pred, t2)
 
 def meals_html_for_day(mensa_code, date):
     return requests.post(
@@ -37,6 +42,7 @@ def extract_meals(html):
         meals = []
         for meal in group.find_all(class_="splMeal"):
             icons = [img["src"] for img in meal.find_all("img", class_="splIcon")]
+            tag_icons, color_icons = partition(lambda x: "ampel" in x, icons)
             meal_name = meal.find("span", class_="bold").text.strip()
             student, employee, guest = (
                 float(price)
@@ -50,7 +56,8 @@ def extract_meals(html):
                 allergens = []
             meals.append({
                 "name": meal_name,
-                "tags": [icon_to_tag(icon) for icon in icons],
+                "color": icon_to_tag(next(color_icons)),
+                "tags": [icon_to_tag(tag_icon) for tag_icon in tag_icons],
                 "price": {
                     "student": student,
                     "employee": employee,
