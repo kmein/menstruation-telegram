@@ -1,18 +1,20 @@
 from bs4 import BeautifulSoup
 from datetime import date, datetime
-from itertools import tee, filterfalse
 from enum import Enum
+from itertools import tee, filterfalse
+from typing import *
 import json
 import re
 import requests
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-def partition(pred, iterable):
+A = TypeVar("A")
+def partition(pred: Callable[[A], bool], iterable: Iterable[A]) -> Tuple[Iterator[A], Iterator[A]]:
     t1, t2 = tee(iterable)
     return filterfalse(pred, t1), filter(pred, t2)
 
-def meals_html_for_day(mensa_code, date):
+def meals_html_for_day(mensa_code: int, date: date) -> str:
     return requests.post(
         "https://www.stw.berlin/xhr/speiseplan-wochentag.html",
         headers=DEFAULT_HEADERS,
@@ -22,7 +24,7 @@ def meals_html_for_day(mensa_code, date):
             "resources_id": mensa_code,
         }).text
 
-def icon_to_tag(icon):
+def icon_to_tag(icon: str) -> str:
     return {
         "/vendor/infomax/mensen/icons/1.png": "vegetarian",
         "/vendor/infomax/mensen/icons/15.png": "vegan",
@@ -34,7 +36,7 @@ def icon_to_tag(icon):
         "/vendor/infomax/mensen/icons/ampel_rot_70x65.png": "red",
     }[icon]
 
-def extract_meals(html):
+def extract_meals(html: str) -> Dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
     groups = []
     for group in soup.find_all(class_="splGroupWrapper"):
@@ -71,7 +73,7 @@ def extract_meals(html):
         })
     return {"groups": groups}
 
-def meals(mensa_code, date):
+def meals(mensa_code: int, date: date) -> Dict[str, Any]:
     return extract_meals(meals_html_for_day(mensa_code, date))
 
 ###

@@ -2,6 +2,7 @@
 from datetime import date
 from itertools import chain
 from termcolor import cprint
+from typing import *
 import argparse
 import json
 import locale
@@ -11,7 +12,7 @@ ENDPOINT = "http://127.0.0.1:5000"
 
 locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
 
-def display_codes(codes, pattern):
+def display_codes(codes: Dict[str, Any], pattern: str) -> None:
     for uni in codes["unis"]:
         if not pattern:
             cprint(uni["name"].upper(), attrs=["bold"])
@@ -23,7 +24,7 @@ def display_codes(codes, pattern):
             print()
 
 
-def display_meal(meal, perspective):
+def display_meal(meal: Dict[str, Any], perspective: str) -> None:
     assert perspective in ("student", "employee", "guest")
     print(locale.currency(meal["price"][perspective]), end=" ")
     cprint(meal["name"], meal["color"] or "white", end=" ")
@@ -68,7 +69,7 @@ if __name__ == "__main__":
         display_codes(json_object, args.pattern)
     else:
         # flatten multiple tags
-        tags = set(chain.from_iterable(args.tags or []))
+        meal_tags = set(chain.from_iterable(args.tags or []))
 
         json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(args.mensa, args.date)).text)
 
@@ -78,7 +79,7 @@ if __name__ == "__main__":
             cprint(group_indent_length * " " + " " + group["name"].upper(), attrs=["bold"])
             for meal in group["meals"]:
                 if not args.colors or meal["color"] in args.colors:
-                    if not tags or tags & set(meal["tags"]):
+                    if not meal_tags or meal_tags & set(meal["tags"]):
                         price = meal["price"][args.category]
                         if price >= args.min and price <= args.max:
                             display_meal(meal, args.category)
