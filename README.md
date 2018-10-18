@@ -104,7 +104,10 @@ TODO
 
 ## client-telegram
 
-TODO
+1. Beschaffe dir beim [BotFather](https://t.me/BotFather) ein Bot-Token für deinen Telegram-Bot.
+2. `$ export MENSTRUATION_TOKEN=<token>` {.bash}
+3. `$ client-telegram/menstruation-bot`
+4. Schreibe deinen Bot mit `/menstruate` an und genieße deinen emojivollen Speiseplan.
 
 ## To-Do
 * [ ] Allergien herausfiltern
