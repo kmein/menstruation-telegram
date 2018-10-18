@@ -27,22 +27,32 @@ tag_emoji = {
 emoji_tag = {emoji: tag for tag, emoji in tag_emoji.items()}
 
 
-def menu_str(json_object, options):
-    lines = []
-    for group in json_object["groups"]:
-        lines.append("*{}*".format(group["name"].upper()))
-        for meal in group["meals"]:
-            if "colors" not in options or meal["color"] in options["colors"]:
-                if "tags" not in options or options["tags"] & set(meal["tags"]):
-                    if meal["price"]["student"] <= options["max"]:
-                        lines.append(r"{color} \[{price}] _{name}_ {tags}".format(
-                            color=tag_emoji[meal["color"]],
-                            price=locale.currency(meal["price"]["student"]),
-                            name=meal["name"],
-                            tags="".join(tag_emoji[tag] for tag in meal["tags"])
-                        ))
-        lines.append("")
-    return "\n".join(lines)
+def render_meal(meal):
+    return r"{color} \[{price}] _{name}_ {tags}".format(
+        color=tag_emoji[meal["color"]],
+        price=locale.currency(meal["price"]["student"]),
+        name=meal["name"],
+        tags="".join(tag_emoji[tag] for tag in meal["tags"])
+    )
+
+
+def filter_meals(group, max_price, colors, tags):
+    for meal in group["meals"]:
+        if not colors or meal["color"] in colors:
+            if not tags or tags & set(meal["tags"]):
+                if meal["price"]["student"] <= max_price:
+                    yield meal
+
+
+def render_group(group, max_price, colors, tags):
+    meals = list(filter_meals(group, max_price, colors, tags))
+    if meals:
+        return "*{name}*\n{meals}\n\n".format(
+            name=group["name"].upper(),
+            meals="\n".join(render_meal(meal) for meal in meals)
+        )
+    else:
+        return ""
 
 
 def handle(msg):
@@ -50,26 +60,32 @@ def handle(msg):
     if content_type == "text" and msg["text"].startswith("/menstruate"):
         text = emoji.demojize(msg["text"])
 
-        options = {}
-        maximum_price_result = re.search(r"(\d+)\s?€", text)
-        options["max"] = float(maximum_price_result.group(1) if maximum_price_result else "inf")
-        colors_result = re.search(r"(:green_heart:|:yellow_heart:|:red_heart:)", text)
-        if colors_result:
-            print(colors_result.groups())
-            options["colors"] = set(emoji_tag[emoji] for emoji in colors_result.groups())
-        tags_result = re.search(r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text)
-        if tags_result:
-            options["tags"] = set(emoji_tag[emoji] for emoji in tags_result.groups())
+        max_price_result = re.search(r"(\d+)\s?€", text)
+        max_price = float(max_price_result.group(1) if max_price_result else "inf")
+
+        colors = set(emoji_tag[emoji] for emoji in re.findall(
+            r"(:green_heart:|:yellow_heart:|:red_heart:)", text
+        ))
+        tags = set(emoji_tag[emoji] for emoji in re.findall(
+            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)+", text
+        ))
 
         json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
-        reply = emoji.emojize(menu_str(json_object, options))
-        bot.sendMessage(chat_id, reply, parse_mode='Markdown')
+
+        reply = emoji.emojize("".join(
+            render_group(group, max_price, colors, tags) for group in json_object["groups"]
+        ))
+
+        if reply:
+            bot.sendMessage(chat_id, reply, parse_mode='Markdown')
+        else:
+            bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
 
 
 if __name__ == "__main__":
     if "MENSTRUATION_TOKEN" not in os.environ:
         print("Please specify bot token in $MENSTRUATION_TOKEN.", file=sys.stderr)
         sys.exit(1)
-    TOKEN = os.environ["MENSTRUATION_TOKEN"]
+    TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
     bot = telepot.Bot(TOKEN)
     bot.message_loop(handle, run_forever=True)

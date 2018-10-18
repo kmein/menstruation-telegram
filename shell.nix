@@ -16,5 +16,5 @@ stdenv.mkDerivation {
   '';
 
   FLASK_APP = "server/backend.py";
-  MENSTRUATION_TOKEN = builtins.readFile "client-telegram/menstruate_bot.token";
+  MENSTRUATION_TOKEN = builtins.readFile ./client-telegram/menstruate_bot.token;
 }
