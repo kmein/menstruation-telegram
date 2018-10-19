@@ -67,7 +67,7 @@ def handle(msg):
             r"(:green_heart:|:yellow_heart:|:red_heart:)", text
         ))
         tags = set(emoji_tag[emoji] for emoji in re.findall(
-            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)+", text
+            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
         ))
 
         json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
