@@ -1,4 +1,4 @@
-# menstruation
+# menstruation-clients
 Schluss mit Frustration! _Regel_ dein Essen mit `menstruation`!
 
 Stell dir vor, du möchtest wissen, was es heute in deiner HU-Mensa gibt. Du möchtest
@@ -44,58 +44,6 @@ $ menstruate --vegetarian --max 3
 0,65 € Quarkspeise (vegetarian)
 0,65 € Pudding (vegetarian)
 0,60 € Obstkompott (vegan)
-```
-
-## server
-
-```bash
-pip install -r server/requirements.txt
-FLASK_APP=server/backend.py flask run
-```
-
-### API-Beschreibung
-
-* `/code` Listet alle Codes der Mensen des Studentenwerks Berlin auf.
-
-```json
-{
-  "unis": [
-    {
-      "mensas": [
-        {
-          "address": "<Adresse>",
-          "code": "<Code>"
-        }
-      ],
-      "name": "<Uni-Name>"
-    }
-  ]
-}
-```
-
-* `/<Mensa-Code>/<YYYY-MM-DD>` Gibt den Speiseplan der Mensa `<Mensa-Code>` am Tag `<YYYY-MM-DD>` zurück. Dabei ist das Datum optional, und es wird der aktuelle Speiseplan zurückgegeben.
-
-```json
-{
-  "groups": [
-    {
-      "meals": [
-        {
-          "allergens": ["<Allergene>"],
-          "color": "<green|yellow|red>",
-          "name": "<Essensname>",
-          "price": {
-            "student": <Studentenpreis>,
-            "employee": <Angestelltenpreis>,
-            "guest": <Gästepreis>
-          },
-          "tags": ["<Kennzeichen>"]
-        }
-      ],
-      "name": "<Gruppenname>"
-    }
-  ]
-}
 ```
 
 ## client-cli
