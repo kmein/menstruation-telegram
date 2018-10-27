@@ -92,7 +92,7 @@ def handle(msg):
                 raise ValueError
 
             bot.sendMessage(chat_id, reply, parse_mode='Markdown')
-        except (ValueError, json.JSONDecodeError):
+        except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError):
             bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
 
 
