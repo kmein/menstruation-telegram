@@ -67,33 +67,36 @@ def render_group(group):
 
 def handle(msg):
     content_type, _, chat_id = telepot.glance(msg)
-    if content_type == "text" and msg["text"].startswith("/menstruate"):
-        text = emoji.demojize(msg["text"])
+    if content_type == "text":
+        if msg["text"].startswith("/help") or msg["text"].startswith("/start"):
+            bot.sendMessage(chat_id, emoji.emojize("/help – zeigt diese Nachricht an\n/menstruate – zeigt heutige Speiseangebote\n/menstruate :seedling: 3€ – —\"— (vegan) bis 3€"))
+        elif msg["text"].startswith("/menstruate"):
+            text = emoji.demojize(msg["text"])
 
-        max_price_result = re.search(r"(\d+)\s?€", text)
-        max_price = float(max_price_result.group(1) if max_price_result else "inf")
+            max_price_result = re.search(r"(\d+)\s?€", text)
+            max_price = float(max_price_result.group(1) if max_price_result else "inf")
 
-        colors = set(emoji_tag[emoji] for emoji in re.findall(
-            r"(:green_heart:|:yellow_heart:|:red_heart:)", text
-        ))
-        tags = set(emoji_tag[emoji] for emoji in re.findall(
-            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
-        ))
+            colors = set(emoji_tag[emoji] for emoji in re.findall(
+                r"(:green_heart:|:yellow_heart:|:red_heart:)", text
+            ))
+            tags = set(emoji_tag[emoji] for emoji in re.findall(
+                r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
+            ))
 
-        try:
-            json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
+            try:
+                json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
 
-            reply = emoji.emojize("".join(pipe(
-                json_object["groups"],
-                map(filter_meals(max_price, colors, tags)),
-                map(render_group))))
+                reply = emoji.emojize("".join(pipe(
+                    json_object["groups"],
+                    map(filter_meals(max_price, colors, tags)),
+                    map(render_group))))
 
-            if not reply:
-                raise ValueError
+                if not reply:
+                    raise ValueError
 
-            bot.sendMessage(chat_id, reply, parse_mode='Markdown')
-        except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError):
-            bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
+                bot.sendMessage(chat_id, reply, parse_mode='Markdown')
+            except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError):
+                bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
 
 
 if __name__ == "__main__":
