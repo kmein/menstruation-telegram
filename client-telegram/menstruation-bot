@@ -6,7 +6,6 @@ import emoji
 import json
 import locale
 import logging
-import logging.handlers
 import os
 import re
 import requests
@@ -25,8 +24,7 @@ locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s] %(message)s",
-    level=logging.INFO,
-    handlers=[logging.handlers.SysLogHandler(address="/dev/log")]
+    level=logging.INFO
 )
 
 tag_emoji = {
