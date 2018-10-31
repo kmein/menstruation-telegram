@@ -6,7 +6,7 @@ build-and-run:
     - cd client-telegram
     - docker build -t "client-telegram:$CI_COMMIT_REF_SLUG" .
     - docker stop -t 2 mensturation_server
-    - docker stop -t 2 client-telegram
+    - docker stop -t 2 mensturation-telegram-client
   except:
     - development
 
