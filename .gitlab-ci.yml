@@ -1,12 +1,12 @@
 image: docker:stable
 
- build:
-   stage: build
-   script:
-     - cd client-telegram
-     - docker build -t "client-telegram:$CI_COMMIT_REF_SLUG" .
-   stage: deploy
-     - docker stop -t 2 mensturation_server
-     - docker stop -t 2 client-telegram
-   except:
-     - development
+build-and-run:
+  stage: deploy
+  script:
+    - cd client-telegram
+    - docker build -t "client-telegram:$CI_COMMIT_REF_SLUG" .
+    - docker stop -t 2 mensturation_server
+    - docker stop -t 2 client-telegram
+  except:
+    - development
+
