@@ -92,7 +92,7 @@ def handle(msg):
                 r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
             ))
 
-            logging.info("Filtering {} and {}.".format(colors, tags))
+            logging.info("Filtering {}, {} and {}.".format(max_price, colors, tags))
 
             try:
                 json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
@@ -107,9 +107,9 @@ def handle(msg):
 
                 bot.sendMessage(chat_id, reply, parse_mode='Markdown')
                 logging.info("Sent menu plan.")
-            except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError):
+            except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError) as e:
                 bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
-                logging.info("Sent error message.")
+                logging.info("Sent error message: " + str(e))
 
 
 if __name__ == "__main__":
