@@ -7,7 +7,7 @@ WORKDIR /app
 
 RUN set -ex \
     && pip install -r requirements.txt \
-    && rm requirements.txt \
+    && rm requirements.txt
 
 CMD [ "python", "menstruation-bot" ]
 
