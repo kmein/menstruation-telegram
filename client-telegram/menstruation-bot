@@ -103,7 +103,7 @@ def handle(msg):
                     map(render_group))))
 
                 if not reply:
-                    raise ValueError
+                    raise ValueError("Filter criteria too specific.")
 
                 bot.sendMessage(chat_id, reply, parse_mode='Markdown')
                 logging.info("Sent menu plan.")

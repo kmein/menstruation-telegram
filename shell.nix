@@ -14,6 +14,4 @@ stdenv.mkDerivation {
     export PATH=$PWD/venv/bin:$PATH
     pip install -r client-cli/requirements.txt -r client-telegram/requirements.txt
   '';
-
-  MENSTRUATION_TOKEN = builtins.readFile ./client-telegram/menstruate_bot.token;
 }
