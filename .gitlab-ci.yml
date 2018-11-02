@@ -5,7 +5,8 @@ build-and-run:
   script:
     - cd client-telegram
     - docker build --no-cache -t "client-telegram:$CI_COMMIT_REF_SLUG" .
-    - /usr/local/bin/docker-compose -f /home/gitlab-runner/docker-compose.yml restart
+    - docker stop -t 1 menstruation_server
+    - docker stop -t 1 menstruation_telegram_client
   except:
     - development
 
