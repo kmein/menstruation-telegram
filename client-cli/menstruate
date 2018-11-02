@@ -3,14 +3,12 @@ from datetime import date
 from itertools import chain
 from termcolor import cprint
 from typing import Any, Dict
+from babel.numbers import format_currency
 import argparse
 import json
-import locale
 import requests
 
-ENDPOINT = "http://127.0.0.1:5000"
-
-locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+ENDPOINT = "http://v22017123717458308.happysrv.de"
 
 
 def display_codes(codes: Dict[str, Any], pattern: str) -> None:
@@ -27,7 +25,7 @@ def display_codes(codes: Dict[str, Any], pattern: str) -> None:
 
 def display_meal(meal: Dict[str, Any], perspective: str) -> None:
     assert perspective in ("student", "employee", "guest")
-    print(locale.currency(meal["price"][perspective]), end=" ")
+    print(format_currency(meal["price"][perspective], "EUR"), end=" ")
     cprint(meal["name"], meal["color"] or "white", end=" ")
     if meal["tags"]:
         print("({})".format(", ".join(meal["tags"])))
@@ -73,7 +71,7 @@ if __name__ == "__main__":
 
         json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(args.mensa, args.date)).text)
 
-        group_indent_length = len(locale.currency(0))
+        group_indent_length = len(format_currency(0, "EUR"))
 
         for group in json_object["groups"]:
             cprint(group_indent_length * " " + " " + group["name"].upper(), attrs=["bold"])
