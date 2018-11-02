@@ -117,6 +117,6 @@ if __name__ == "__main__":
         print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
-    print(str(TOKEN))
+    print(str(TOKEN), file=sys.stderr)
     bot = telepot.Bot(TOKEN)
     bot.message_loop(handle, run_forever=True)
