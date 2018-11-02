@@ -114,8 +114,9 @@ def handle(msg):
 
 if __name__ == "__main__":
     if "MENSTRUATION_TOKEN" not in os.environ:
-        print("Please specify bot token in $MENSTRUATION_TOKEN.", file=sys.stderr)
+        print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
     bot = telepot.Bot(TOKEN)
+    print(bot.getMe())
     bot.message_loop(handle, run_forever=True)
