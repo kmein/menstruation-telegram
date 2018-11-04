@@ -144,7 +144,7 @@ def handle(msg):
                     raise ValueError()
             except ValueError:
                 logging.warning("Malformed /menstrudate command: " + text)
-                bot.sendMessage(chat_id, emoji.emojize("Falsches Datumsformat. :worried_face:"))
+                bot.sendMessage(chat_id, emoji.emojize("Falsches Datumsformat. :worried_face:\nBitte verwende JJJJ-MM-TT."))
 
 
 if __name__ == "__main__":
