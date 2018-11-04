@@ -109,13 +109,19 @@ def handle(msg):
     if content_type == "text":
         if msg["text"].startswith("/help") or msg["text"].startswith("/start"):
             logging.info("Received /help or /start.")
-            bot.sendMessage(chat_id, emoji.emojize("""*BEFEHLE*
-/menstruate :seedling: 3€ – Zeigt heutige Speiseangebote (vegan) bis 3€.
-/menstrudate tomorrow – Zeigt morgige Speiseangebote.
-/menstrudate 2018-10-22 – Zeigt die Speiseangebote für den 22.10.2018.
-
-*LEGENDE*
-{}""".format("\n".join(k + " – " + v for v, k in tag_emoji.items()))), parse_mode="Markdown")
+            infos = lambda mapping: "\n".join(k + " – " + v for k, v in mapping.items())
+            command_description = {
+                "/menstruate :seedling: 3€": "Zeigt heutige Speiseangebote (vegan) bis 3€.",
+                "/menstrudate tomorrow": "Zeigt morgige Speiseangebote.",
+                "/menstrudate 2018-10-22": "Zeigt die Speiseangebote für den 22.10.2018."
+            }
+            bot.sendMessage(
+                chat_id,
+                emoji.emojize("*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
+                    infos(command_description),
+                    infos(emoji_tag))),
+                parse_mode="Markdown"
+            )
             logging.info("Sent help message.")
         elif msg["text"].startswith("/menstruate"):
             logging.info("Received /menstruate.")
@@ -130,7 +136,9 @@ def handle(msg):
                     handle_menstruate(
                         chat_id,
                         text,
-                        date.today() + timedelta(days=1) if menstru_date.group(1) == "tomorrow" else datetime.strptime(menstru_date.group(1), "%Y-%m-%d").date()
+                        (date.today() + timedelta(days=1)
+                         if menstru_date.group(1) == "tomorrow"
+                         else datetime.strptime(menstru_date.group(1), "%Y-%m-%d").date())
                     )
                 else:
                     raise ValueError()
