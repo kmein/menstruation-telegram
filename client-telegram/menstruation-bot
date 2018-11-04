@@ -103,7 +103,7 @@ def handle(msg):
             logging.info("Sent menu plan.")
         except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError) as e:
             bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
-            logging.info("Sent error message: " + str(e))
+            logging.warning("Sent error message: " + str(e))
 
     content_type, _, chat_id = telepot.glance(msg)
     if content_type == "text":
@@ -129,7 +129,7 @@ def handle(msg):
                 else:
                     raise ValueError()
             except ValueError:
-                logging.info("Malformed /menstrudate command: " + text)
+                logging.warning("Malformed /menstrudate command: " + text)
                 bot.sendMessage(chat_id, emoji.emojize("Falsches Datumsformat. :worried_face:"))
 
 
