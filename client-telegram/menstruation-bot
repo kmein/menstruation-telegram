@@ -119,12 +119,17 @@ def handle(msg):
             logging.info("Received /menstrudate.")
             text = emoji.demojize(msg["text"])
             menstru_date = re.search(r"(\d{4}-\d{2}-\d{2}|tomorrow)", text)
-            if menstru_date == "tomorrow":
-                handle_menstruate(chat_id, text, date.today() + timedelta(days=1))
-            elif menstru_date:
-                handle_menstruate(chat_id, text, datetime.strptime(menstru_date, "%Y-%m-%d").date())
-            else:
-                logging.info("Wrong /menstrudate command: " + text)
+            try:
+                if menstru_date:
+                    handle_menstruate(
+                        chat_id,
+                        text,
+                        date.today() + timedelta(days=1) if menstru_date.group(1) == "tomorrow" else datetime.strptime(menstru_date.group(1), "%Y-%m-%d").date()
+                    )
+                else:
+                    raise ValueError()
+            except ValueError:
+                logging.info("Malformed /menstrudate command: " + text)
                 bot.sendMessage(chat_id, emoji.emojize("Falsches Datumsformat. :worried_face:"))
 
 
