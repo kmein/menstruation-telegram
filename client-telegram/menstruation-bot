@@ -109,7 +109,7 @@ def handle(msg):
     if content_type == "text":
         if msg["text"].startswith("/help") or msg["text"].startswith("/start"):
             logging.info("Received /help or /start.")
-            bot.sendMessage(chat_id, emoji.emojize("/help – zeigt diese Nachricht an\n/menstruate – zeigt heutige Speiseangebote\n/menstruate :seedling: 3€ – —\"— (vegan) bis 3€\n\nLegende:\n{}".format("\n".join(k + " – " + v for v, k in tag_emoji.items()))))
+            bot.sendMessage(chat_id, emoji.emojize("*BEFEHLE*\n/help – zeigt diese Nachricht an\n/menstruate – zeigt heutige Speiseangebote\n/menstruate :seedling: 3€ – —\"— (vegan) bis 3€\n\n*LEGENDE*\n{}".format("\n".join(k + " – " + v for v, k in tag_emoji.items()))))
             logging.info("Sent help message.")
         elif msg["text"].startswith("/menstruate"):
             logging.info("Received /menstruate.")
