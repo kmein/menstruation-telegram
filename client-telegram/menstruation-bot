@@ -73,6 +73,7 @@ def render_group(group):
 
 def handle(msg):
     def handle_menstruate(chat_id, text, date):
+        logging.info("Getting menu for " + str(date))
         max_price_result = re.search(r"(\d+)\s?€", text)
         max_price = float(max_price_result.group(1) if max_price_result else "inf")
 
