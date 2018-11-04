@@ -109,14 +109,13 @@ def handle(msg):
     if content_type == "text":
         if msg["text"].startswith("/help") or msg["text"].startswith("/start"):
             logging.info("Received /help or /start.")
-            bot.sendMessage(chat_id, emoji.emojize(
-                """*BEFEHLE*
-                /menstruate :seedling: 3€ – Zeigt heutige Speiseangebote (vegan) bis 3€.
-                /menstrudate tomorrow – Zeigt morgige Speiseangebote.
-                /menstrudate 2018-10-22 – Zeigt die Speiseangebote für den 22.10.2018.
+            bot.sendMessage(chat_id, emoji.emojize("""*BEFEHLE*
+/menstruate :seedling: 3€ – Zeigt heutige Speiseangebote (vegan) bis 3€.
+/menstrudate tomorrow – Zeigt morgige Speiseangebote.
+/menstrudate 2018-10-22 – Zeigt die Speiseangebote für den 22.10.2018.
 
-                *LEGENDE*
-                {}""".format("\n".join(k + " – " + v for v, k in tag_emoji.items()))), parse_mode="Markdown")
+*LEGENDE*
+{}""".format("\n".join(k + " – " + v for v, k in tag_emoji.items()))), parse_mode="Markdown")
             logging.info("Sent help message.")
         elif msg["text"].startswith("/menstruate"):
             logging.info("Received /menstruate.")
