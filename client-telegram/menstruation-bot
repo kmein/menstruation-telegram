@@ -95,7 +95,7 @@ def handle(msg):
             logging.info("Filtering {} and {}.".format(colors, tags))
 
             try:
-                json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date.today())).text)
+                json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, "2018-10-10").text)
 
                 reply = emoji.emojize("".join(pipe(
                     json_object["groups"],
