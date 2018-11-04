@@ -17,7 +17,7 @@ try:
     if not ENDPOINT:
         raise KeyError
 except KeyError:
-    ENDPOINT = "http://127.0.0.1:5000"
+    ENDPOINT = "http://127.0.0.1:80"
 
 
 locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
@@ -92,10 +92,10 @@ def handle(msg):
                 r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
             ))
 
-            logging.info("Filtering {} and {}.".format(colors, tags))
+            logging.info("Filtering {}, {} and {}.".format(max_price, colors, tags))
 
             try:
-                json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, "2018-10-10").text)
+                json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, "2018-10-10").text))
 
                 reply = emoji.emojize("".join(pipe(
                     json_object["groups"],
@@ -103,18 +103,18 @@ def handle(msg):
                     map(render_group))))
 
                 if not reply:
-                    raise ValueError
+                    raise ValueError("Filter criteria too specific.")
 
                 bot.sendMessage(chat_id, reply, parse_mode='Markdown')
                 logging.info("Sent menu plan.")
-            except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError):
+            except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError) as e:
                 bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
-                logging.info("Sent error message.")
+                logging.info("Sent error message: " + str(e))
 
 
 if __name__ == "__main__":
     if "MENSTRUATION_TOKEN" not in os.environ:
-        print("Please specify bot token in $MENSTRUATION_TOKEN.", file=sys.stderr)
+        print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
     bot = telepot.Bot(TOKEN)
