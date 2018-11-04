@@ -86,7 +86,9 @@ def handle(msg):
         logging.info("Filtering {}, {} and {}.".format(max_price, colors, tags))
 
         try:
-            json_object = json.loads(requests.get(ENDPOINT + "/{}/{}".format(191, date)).text)
+            request_url = ENDPOINT + "/{}/{}".format(191, date)
+            logging.info("Requesting " + request_url)
+            json_object = json.loads(requests.get(request_url).text)
 
             reply = emoji.emojize("".join(pipe(
                 json_object["groups"],
