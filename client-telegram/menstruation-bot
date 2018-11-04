@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from toolz import pipe
 from toolz.curried import itemmap, filter, map
 import emoji
@@ -113,11 +113,11 @@ def handle(msg):
         elif msg["text"].startswith("/menstruate"):
             logging.info("Received /menstruate.")
             text = emoji.demojize(msg["text"])
-            handle_menstruate(chat_id, text, datetime.today())
+            handle_menstruate(chat_id, text, date.today())
         elif msg["text"].startswith("/tomorrow"):
             logging.info("Received /tomorrow.")
             text = emoji.demojize(msg["text"])
-            handle_menstruate(chat_id, text, datetime.today() + timedelta(days=1))
+            handle_menstruate(chat_id, text, date.today() + timedelta(days=1))
 
 
 if __name__ == "__main__":
