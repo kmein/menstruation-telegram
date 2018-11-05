@@ -2,13 +2,13 @@
 
 ## Nächste Schritte
 
-[x] Benutzerfreundlichkeit
-  [x] Ausführlichere Hilfetexte
-  [x] Klarere Anleitung
-[ ] Benutzereinstellungen
-  [x] Mensawahl
-  [ ] Suchparameter
-  [ ] Persistenz via [`ConfigParser`](https://docs.python.org/3/library/configparser.html)
+- [x] Benutzerfreundlichkeit
+  - [x] Ausführlichere Hilfetexte
+  - [x] Klarere Anleitung
+- [ ] Benutzereinstellungen
+  - [x] Mensawahl
+  - [ ] Suchparameter
+  - [ ] Persistenz via [`ConfigParser`](https://docs.python.org/3/library/configparser.html)
 
     ```ini
     [chat_id]
@@ -17,5 +17,5 @@
     colors = green,yellow
     tags = vegan
     ```
-[x] Support für alle Mensen des Studentenwerkes (s. `/codes`)
-  [x] Dialog zur Mensawahl
+- [x] Support für alle Mensen des Studentenwerkes (s. `/codes`)
+  - [x] Dialog zur Mensawahl
