@@ -2,6 +2,7 @@
 from datetime import date, datetime, timedelta
 from toolz import pipe
 from toolz.curried import itemmap, filter, map
+import configparser
 import emoji
 import json
 import locale
@@ -11,6 +12,7 @@ import re
 import requests
 import sys
 import telepot
+from typing import Any, Callable, Tuple, Set, Dict
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -20,11 +22,51 @@ except KeyError:
     ENDPOINT = "http://127.0.0.1:80"
 
 
-locale.setlocale(locale.LC_ALL, 'de_DE.UTF-8')
+ChatId = str
+
+
+class MenstruationBot(telepot.Bot):
+    def __init__(
+        self,
+        token: str,
+        config: configparser.ConfigParser = configparser.ConfigParser(),
+    ) -> None:
+        self.bot = telepot.Bot(token)
+        # note: this is not supposed to be 'Any' but 'MenstruationBot' which does not work
+        self.handlers: Dict[str, Callable[[Any, ChatId, str], None]] = dict()
+        self.config = config
+
+    def __handle_message(self, message) -> None:
+        content_type, _, chat_id = telepot.glance(message)
+        logging.info("Received {} message in chat {}".format(content_type, chat_id))
+        if content_type == "text":
+            text = emoji.demojize(message["text"])
+            logging.info('Message text is "{}"'.format(text))
+            for command in self.handlers:
+                if text.startswith(command):
+                    logging.info("Triggered {} command".format(command))
+                    self.handlers[command](self, chat_id, text[len(command) :])
+                    logging.info("Successfully handled {} command".format(command))
+
+    def send_message(self, chat_id: ChatId, text: str) -> None:
+        self.bot.sendMessage(chat_id, emoji.emojize(text), parse_mode="Markdown")
+
+    def add_handler(
+        self, command: str, callback: Callable[[Any, ChatId, str], None]
+    ) -> None:
+        self.handlers[command] = callback
+
+    def run(self) -> None:
+        try:
+            self.bot.message_loop(self.__handle_message, run_forever=True)
+        except Exception as e:
+            logging.warning("Caught {}".format(e))
+
+
+locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
 logging.basicConfig(
-    format="[%(levelname)s %(asctime)s] %(message)s",
-    level=logging.INFO
+    format="[%(levelname)s %(asctime)s] %(message)s", level=logging.INFO
 )
 
 tag_emoji = {
@@ -46,18 +88,25 @@ def render_meal(meal):
         color=tag_emoji[meal["color"]],
         price=locale.currency(meal["price"]["student"]),
         name=meal["name"],
-        tags="".join(tag_emoji[tag] for tag in meal["tags"]))
+        tags="".join(tag_emoji[tag] for tag in meal["tags"]),
+    )
 
 
 def filter_meals(max_price, colors, tags):
     def process(group):
         group["meals"] = pipe(
             group["meals"],
-            filter(lambda meal: ((not colors or meal["color"] in colors)
-                                 and (not tags or set(meal["tags"]) & tags)
-                                 and (meal["price"]["student"] <= max_price))),
-            list)
+            filter(
+                lambda meal: (
+                    (not colors or meal["color"] in colors)
+                    and (not tags or set(meal["tags"]) & tags)
+                    and (meal["price"]["student"] <= max_price)
+                )
+            ),
+            list,
+        )
         return group
+
     return process
 
 
@@ -65,92 +114,119 @@ def render_group(group):
     if group["meals"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(map(render_meal)(group["meals"]))
+            meals="\n".join(map(render_meal)(group["meals"])),
         )
     else:
         return ""
 
 
-def handle(msg):
-    def handle_menstruate(chat_id, text, date):
-        logging.info("Getting menu for " + str(date))
-        max_price_result = re.search(r"(\d+)\s?€", text)
-        max_price = float(max_price_result.group(1) if max_price_result else "inf")
+def extract_query(text: str) -> Tuple[float, Set[str], Set[str]]:
+    max_price_result = re.search(r"(\d+)\s?€", text)
+    max_price = float(max_price_result.group(1) if max_price_result else "inf")
 
-        colors = set(emoji_tag[emoji] for emoji in re.findall(
-            r"(:green_heart:|:yellow_heart:|:red_heart:)", text
-        ))
-        tags = set(emoji_tag[emoji] for emoji in re.findall(
-            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)", text
-        ))
+    colors = set(
+        emoji_tag[emoji]
+        for emoji in re.findall(r"(:green_heart:|:yellow_heart:|:red_heart:)", text)
+    )
+    tags = set(
+        emoji_tag[emoji]
+        for emoji in re.findall(
+            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)",
+            text,
+        )
+    )
 
-        logging.info("Filtering {}, {} and {}.".format(max_price, colors, tags))
+    logging.info("Extracted {} from \"{}\"".format((max_price, colors, tags), text))
+    return max_price, colors, tags
 
-        try:
-            request_url = ENDPOINT + "/{}/{}".format(191, date)
-            logging.info("Requesting " + request_url)
-            json_object = json.loads(requests.get(request_url).text)
 
-            reply = emoji.emojize("".join(pipe(
+def extract_date(text: str) -> date:
+    matches = re.search(r"(\d{4}-\d{2}-\d{2}|today|tomorrow)", text)
+    if matches:
+        if matches.group(1) == "today":
+            parsed_date = date.today()
+        elif matches.group(1) == "tomorrow":
+            parsed_date = date.today() + timedelta(days=1)
+        elif matches.group(1):
+            parsed_date = datetime.strptime(matches.group(1), "%Y-%m-%d").date()
+        logging.info("Extracted {} from \"{}\"".format(parsed_date, text))
+        return parsed_date
+    else:
+        raise ValueError('Malformed date in "{}"'.format(text))
+
+
+def get_json(mensa_code: int, date: date) -> dict:
+    request_url = "{}/{}/{}".format(ENDPOINT, mensa_code, date)
+    logging.info("Requesting {}".format(request_url))
+    return json.loads(requests.get(request_url).text)
+
+
+def help_handler(self, chat_id: ChatId, text):
+    def infos(mapping):
+        return "\n".join(k + " – " + v for k, v in mapping.items())
+
+    command_description = {
+        "/menstruate :seedling: 3€": "Heutige Speiseangebote (vegan bis 3€).",
+        "/menstrudate tomorrow": "Morgige Speiseangebote.",
+        "/menstrudate 2018-10-22": "Speiseangebote für den 22.10.2018.",
+    }
+    emoji_description = {
+        ":carrot:": "vegetarisch",
+        ":seedling:": "vegan",
+        ":smiling_face_with_halo:": "Bio",
+        ":fish:": "nachhaltig gefischt",
+        ":globe_showing_Americas:": "klimafreundlich",
+        ":yellow_heart:": "Lebensmittelampel gelb",
+        ":green_heart:": "Lebensmittelampel grün",
+        ":red_heart:": "Lebensmittelampel rot",
+    }
+    self.send_message(
+        chat_id,
+        "*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
+            infos(command_description), infos(emoji_description)
+        ),
+    )
+
+
+def menstrudate_handler(self, chat_id: ChatId, text):
+    max_price, colors, tags = extract_query(text)
+    try:
+        menstru_date = extract_date(text)
+        json_object = get_json(
+            self.config.getint(chat_id, "mensa", fallback=191), menstru_date
+        )
+        reply = "".join(
+            pipe(
                 json_object["groups"],
                 map(filter_meals(max_price, colors, tags)),
-                map(render_group))))
-
-            if not reply:
-                raise ValueError("Filter criteria too specific.")
-
-            bot.sendMessage(chat_id, reply, parse_mode='Markdown')
-            logging.info("Sent menu plan.")
-        except (ValueError, json.JSONDecodeError, requests.exceptions.ConnectionError) as e:
-            bot.sendMessage(chat_id, emoji.emojize("Kein Essen gefunden. :worried_face:"))
-            logging.warning("Sent error message: " + str(e))
-
-    content_type, _, chat_id = telepot.glance(msg)
-    if content_type == "text":
-        if msg["text"].startswith("/help") or msg["text"].startswith("/start"):
-            logging.info("Received /help or /start.")
-            infos = lambda mapping: "\n".join(k + " – " + v for k, v in mapping.items())
-            command_description = {
-                "/menstruate :seedling: 3€": "Zeigt heutige Speiseangebote (vegan) bis 3€.",
-                "/menstrudate tomorrow": "Zeigt morgige Speiseangebote.",
-                "/menstrudate 2018-10-22": "Zeigt die Speiseangebote für den 22.10.2018."
-            }
-            bot.sendMessage(
-                chat_id,
-                emoji.emojize("*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
-                    infos(command_description),
-                    infos(emoji_tag))),
-                parse_mode="Markdown"
+                map(render_group),
             )
-            logging.info("Sent help message.")
-        elif msg["text"].startswith("/menstruate"):
-            logging.info("Received /menstruate.")
-            text = emoji.demojize(msg["text"])
-            handle_menstruate(chat_id, text, date.today())
-        elif msg["text"].startswith("/menstrudate"):
-            logging.info("Received /menstrudate.")
-            text = emoji.demojize(msg["text"])
-            menstru_date = re.search(r"(\d{4}-\d{2}-\d{2}|tomorrow)", text)
-            try:
-                if menstru_date:
-                    handle_menstruate(
-                        chat_id,
-                        text,
-                        (date.today() + timedelta(days=1)
-                         if menstru_date.group(1) == "tomorrow"
-                         else datetime.strptime(menstru_date.group(1), "%Y-%m-%d").date())
-                    )
-                else:
-                    raise ValueError()
-            except ValueError:
-                logging.warning("Malformed /menstrudate command: " + text)
-                bot.sendMessage(chat_id, emoji.emojize("Falsches Datumsformat. :worried_face:\nBitte verwende JJJJ-MM-TT."))
+        )
+        if reply:
+            self.send_message(chat_id, reply)
+        else:
+            self.send_message(chat_id, "Kein Essen gefunden. :worried_face:")
+    except ValueError:
+        self.send_message(
+            chat_id,
+            "Falsches Datumsformat. :worried_face:\nBitte verwende JJJJ-MM-TT."
+        )
 
 
 if __name__ == "__main__":
     if "MENSTRUATION_TOKEN" not in os.environ:
-        print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+        print(
+            "Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr
+        )
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
-    bot = telepot.Bot(TOKEN)
-    bot.message_loop(handle, run_forever=True)
+
+    bot = MenstruationBot(TOKEN)
+    bot.add_handler("/help", help_handler)
+    bot.add_handler("/start", help_handler)
+    bot.add_handler(
+        "/menstruate",
+        lambda self, chat_id, text: menstrudate_handler(self, chat_id, "today " + text),
+    )
+    bot.add_handler("/menstrudate", menstrudate_handler)
+    bot.run()
