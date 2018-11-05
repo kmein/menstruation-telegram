@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+MENSTRUATION_ENDPOINT=http://v22017123717458308.happysrv.de MENSTRUATION_TOKEN=363786660:AAG42XUzQxfhTIv8gomCFPSzNXT67pmAMi4 ./menstruation-bot
