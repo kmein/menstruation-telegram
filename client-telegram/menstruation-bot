@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 from datetime import date, datetime, timedelta
-from telepot.loop import MessageLoop
-from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
+from telegram.ext import Updater
+from telegram.ext.filters import Filters
 from toolz import pipe
 from toolz.curried import itemmap, filter, map
-from typing import Any, Callable, Tuple, Set, Dict
+from typing import Callable, Tuple, Set, Dict
 import configparser
-import emoji
+from emoji import emojize, demojize
 import json
 import locale
 import logging
@@ -15,8 +17,6 @@ import random
 import re
 import requests
 import sys
-import telepot
-import time
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -25,86 +25,11 @@ try:
 except KeyError:
     ENDPOINT = "http://127.0.0.1:80"
 
-
-ChatId = str
-
-
-class MenstruationBot(telepot.Bot):
-    def __init__(
-        self,
-        token: str,
-        config: configparser.ConfigParser = configparser.ConfigParser(),
-    ) -> None:
-        self.bot = telepot.Bot(token)
-        # note: this is not supposed to be 'Any' but 'MenstruationBot' which does not work
-        self.handlers: Dict[str, Callable[[Any, ChatId, str], None]] = dict()
-        self.callback_handlers: Dict[str, Callable[[Any, ChatId, str], None]] = dict()
-        self.config = config
-
-    def __handle_message(self, message) -> None:
-        content_type, _, chat_id = telepot.glance(message)
-        logging.info("Received {} message in chat {}".format(content_type, chat_id))
-        if content_type == "text":
-            text = emoji.demojize(message["text"])
-            logging.info('Message text is "{}"'.format(text))
-            for command in self.handlers:
-                if text.startswith(command):
-                    logging.info("Message triggered {} command".format(command))
-                    self.handlers[command](self, chat_id, text[len(command) :])
-                    logging.info("Successfully handled {} command".format(command))
-
-    def __handle_callback(self, message) -> None:
-        query_id, chat_id, query_data = telepot.glance(message, flavor="callback_query")
-        logging.info(
-            'Received callback query {} from {}: "{}"'.format(
-                query_id, chat_id, query_data
-            )
-        )
-        for command in self.callback_handlers:
-            if query_data.startswith(command):
-                logging.info("Callback triggered {} command".format(command))
-                self.callback_handlers[command](
-                    self, chat_id, query_data[len(command) :]
-                )
-                logging.info("Successfully handled {} callback command".format(command))
-
-    def send_message(self, chat_id: ChatId, text: str, **kwargs) -> None:
-        short_message = (text[:20] + "..") if len(text) > 20 else text
-        self.bot.sendMessage(
-            chat_id, emoji.emojize(text), parse_mode="Markdown", **kwargs
-        )
-        logging.info('Sent to {}: "{}"'.format(chat_id, short_message))
-
-    def add_handler(
-        self, command: str, callback: Callable[[Any, ChatId, str], None]
-    ) -> None:
-        self.handlers[command] = callback
-
-    def add_callback_handler(
-        self, command: str, callback: Callable[[Any, ChatId, str], None]
-    ) -> None:
-        self.callback_handlers[command] = callback
-
-    def run(self) -> None:
-        try:
-            MessageLoop(
-                self.bot,
-                {
-                    "chat": self.__handle_message,
-                    "callback_query": self.__handle_callback,
-                },
-            ).run_as_thread()
-            while 1:
-                time.sleep(10)
-        except Exception as e:
-            logging.warning("Caught {}".format(e))
-
+config = configparser.ConfigParser()
 
 locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
-logging.basicConfig(
-    format="[%(levelname)s %(asctime)s] %(message)s", level=logging.INFO
-)
+logging.basicConfig(level=logging.DEBUG)
 
 tag_emoji = {
     "vegetarian": ":carrot:",
@@ -198,7 +123,7 @@ def get_json(mensa_code: int, date: date) -> dict:
     return json.loads(requests.get(request_url).text)
 
 
-def get_mensas() -> Dict[int, str]:
+def get_mensas() -> Dict[str, str]:
     request_url = "{}/codes".format(ENDPOINT)
     logging.info("Requesting {}".format(request_url))
     json_object = json.loads(requests.get(request_url).text)
@@ -209,7 +134,7 @@ def get_mensas() -> Dict[int, str]:
     return code_address
 
 
-def help_handler(self, chat_id: ChatId, text):
+def help_handler(bot, update):
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
@@ -228,83 +153,116 @@ def help_handler(self, chat_id: ChatId, text):
         ":green_heart:": "Lebensmittelampel grün",
         ":red_heart:": "Lebensmittelampel rot",
     }
-    self.send_message(
-        chat_id,
-        "*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
-            infos(command_description), infos(emoji_description)
+    bot.send_message(
+        update.message.chat_id,
+        emojize(
+            "*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
+                infos(command_description), infos(emoji_description)
+            )
         ),
+        parse_mode=ParseMode.MARKDOWN,
     )
 
 
-def menstrudate_handler(self, chat_id: ChatId, text):
+def menstrudate_handler(bot, update, args):
+    text = demojize("".join(args))
     max_price, colors, tags = extract_query(text)
     try:
         menstru_date = extract_date(text)
-        logging.info(self.config.sections())
-        json_object = get_json(self.config.get(str(chat_id), "mensa"), menstru_date)
-        reply = "".join(
-            pipe(
-                json_object["groups"],
-                map(filter_meals(max_price, colors, tags)),
-                map(render_group),
-            )
-        )
-        if reply:
-            self.send_message(chat_id, reply)
-        else:
-            self.send_message(chat_id, "Kein Essen gefunden. {}".format(error_emoji()))
     except ValueError as e:
         logging.warning(e)
-        self.send_message(
-            chat_id,
-            "_Entweder_ ist diese Mensa noch nicht unterstützt, {}\n_oder_ es gibt an diesem dort Tag kein Essen, {}\n_oder_ Du hast das Datum falsch angegeben. {}\nNutze dafür bitte `JJJJ-MM-TT`.".format(
-                error_emoji(),
-                error_emoji(),
-                error_emoji(),
+        bot.send_message(
+            update.message.chat_id,
+            emojize(
+                "Du hast das Datum falsch angegeben. {}\nNutze dafür bitte `JJJJ-MM-TT`.".format(
+                    error_emoji()
+                )
             ),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    try:
+        json_object = get_json(
+            config.get(str(update.message.from_user.id), "mensa"), menstru_date
         )
     except configparser.NoSectionError as e:
         logging.warning(e)
-        self.send_message(
-            chat_id,
-            "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :index_pointing_up:".format(
-                error_emoji()
+        bot.send_message(
+            update.message.chat_id,
+            emojize(
+                "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :index_pointing_up:".format(
+                    error_emoji()
+                )
             ),
+        )
+        return
+    except ValueError as e:
+        logging.warning(e)
+        bot.send_message(
+            update.message.chat_id,
+            emojize(
+                "Entweder ist diese Mensa noch nicht unterstützt, {}\noder es gibt an diesem dort Tag kein Essen. {}".format(
+                    error_emoji(), error_emoji()
+                )
+            ),
+        )
+        return
+
+    reply = "".join(
+        pipe(
+            json_object["groups"],
+            map(filter_meals(max_price, colors, tags)),
+            map(render_group),
+        )
+    )
+    if reply:
+        bot.send_message(
+            update.message.chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN
+        )
+    else:
+        bot.send_message(
+            update.message.chat_id,
+            emojize("Kein Essen gefunden. {}".format(error_emoji())),
         )
 
 
-def mensa_handler(self, chat_id: ChatId, text):
+def mensa_handler(bot, update, args):
+    text = " ".join(args)
     code_address = get_mensas()
     pattern = text.strip()
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=address, callback_data="SETMENSA {}".format(code)
-                )
-            ]
+            [InlineKeyboardButton(text=address, callback_data=code)]
             for code, address in sorted(code_address.items(), key=lambda item: item[1])
             if pattern.lower() in address.lower()
         ]
     )
-    self.send_message(
-        chat_id,
-        "Wähle Deine Mensa aus. :ballot_box_with_check:",
+    bot.send_message(
+        update.message.chat_id,
+        emojize("Wähle Deine Mensa aus. :ballot_box_with_check:"),
         reply_markup=mensa_chooser,
     )
 
 
-def setmensa_callback_handler(self, chat_id: ChatId, text):
-    section = str(chat_id)
-    if not self.config.has_section(section):
-        self.config.add_section(section)
-        logging.info("Created new config section: {}".format(section))
-    self.config.set(section, "mensa", text.strip())
-    logging.info("Set {}.mensa to {}".format(section, text.strip()))
-    bot.send_message(
-        chat_id,
-        "Mensa ausgewählt. :flexed_biceps:\nNun kannst Du Dir mit „/menstruate“ den Speiseplan anschauen. :eyes::fork_and_knife:",
-    )
+def mensa_callback_handler(bot, update):
+    query = update.callback_query
+    if query:
+        section = str(query.from_user.id)
+        if not config.has_section(section):
+            config.add_section(section)
+            logging.info("Created new config section: {}".format(section))
+        address = get_mensas()[query.data]
+        bot.answer_callback_query(
+            query.id,
+            text=emojize(
+                "Mensa „{}“ ausgewählt. :flexed_biceps:\nNun kannst Du Dir mit „/menstruate“ den Speiseplan anschauen. :eyes::fork_and_knife:".format(
+                    address
+                )
+            ),
+        )
+        config.set(section, "mensa", query.data)
+        logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
 def error_emoji():
@@ -318,7 +276,7 @@ def error_emoji():
             ":hushed_face:",
             ":astonished_face:",
             ":flushed_face:",
-            ":⊛_pleading_face:",
+            ":pleading_face:",
             ":frowning_face_with_open_mouth:",
             ":anguished_face:",
             ":fearful_face:",
@@ -330,7 +288,6 @@ def error_emoji():
             ":confounded_face:",
             ":persevering_face:",
             ":disappointed_face:",
-            ":CLDR_Short_Name:",
             ":downcast_face_with_sweat:",
             ":weary_face:",
             ":tired_face:",
@@ -346,14 +303,29 @@ if __name__ == "__main__":
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
 
-    bot = MenstruationBot(TOKEN)
-    bot.add_handler("/help", help_handler)
-    bot.add_handler("/start", help_handler)
-    bot.add_handler(
-        "/menstruate",
-        lambda self, chat_id, text: menstrudate_handler(self, chat_id, "today " + text),
+    bot = Updater(token=TOKEN)
+    bot.dispatcher.add_handler(CommandHandler("help", help_handler))
+    bot.dispatcher.add_handler(CommandHandler("start", help_handler))
+    bot.dispatcher.add_handler(
+        CommandHandler(
+            "menstruate",
+            lambda bot, update, args: menstrudate_handler(
+                bot, update, ["today"] + args
+            ),
+            pass_args=True,
+        )
     )
-    bot.add_handler("/menstrudate", menstrudate_handler)
-    bot.add_handler("/mensa", mensa_handler)
-    bot.add_callback_handler("SETMENSA", setmensa_callback_handler)
-    bot.run()
+    bot.dispatcher.add_handler(
+        CommandHandler("menstrudate", menstrudate_handler, pass_args=True)
+    )
+    bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
+    bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
+    bot.dispatcher.add_handler(
+        MessageHandler(
+            Filters.command,
+            lambda bot, update: bot.send_message(
+                chat_id=update.message.chat_id, text="Hä?!"
+            ),
+        )
+    )
+    bot.start_polling()

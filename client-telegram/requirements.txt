@@ -1,4 +1,4 @@
 requests
-telepot
 emoji
 toolz
+python-telegram-bot
