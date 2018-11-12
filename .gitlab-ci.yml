@@ -7,6 +7,3 @@ build-and-run:
     - docker build --no-cache -t "client-telegram:$CI_COMMIT_REF_SLUG" .
     - docker stop -t 1 menstruation_server
     - docker stop -t 1 menstruation_telegram_client
-  except:
-    - development
-
