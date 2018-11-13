@@ -116,10 +116,11 @@ def extract_date(text: str) -> date:
             parsed_date = date.today() + timedelta(days=1)
         elif matches.group(1):
             parsed_date = datetime.strptime(matches.group(1), "%Y-%m-%d").date()
+        else:
+            parsed_date = date.today()
+            logging.info("Malformed date in '{}', defaulting to today".format(text))
         logging.info('Extracted {} from "{}"'.format(parsed_date, text))
         return parsed_date
-    else:
-        raise ValueError('Malformed date in "{}"'.format(text))
 
 
 def get_json(mensa_code: int, date: date) -> dict:
@@ -145,9 +146,9 @@ def help_handler(bot, update):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
     command_description = {
-        "/menstruate :seedling: 3€": "Heutige Speiseangebote (vegan bis 3€).",
-        "/menstrudate tomorrow": "Morgige Speiseangebote.",
-        "/menstrudate 2018-10-22": "Speiseangebote für den 22.10.2018.",
+        "/menu :seedling: 3€": "Heutige Speiseangebote (vegan bis 3€).",
+        "/menu tomorrow": "Morgige Speiseangebote.",
+        "/menu 2018-10-22": "Speiseangebote für den 22.10.2018.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -309,16 +310,7 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
     bot.dispatcher.add_handler(
-        CommandHandler(
-            "menstruate",
-            lambda bot, update, args: menstrudate_handler(
-                bot, update, ["today"] + args
-            ),
-            pass_args=True,
-        )
-    )
-    bot.dispatcher.add_handler(
-        CommandHandler("menstrudate", menstrudate_handler, pass_args=True)
+        CommandHandler("menu", menstrudate_handler, pass_args=True)
     )
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
