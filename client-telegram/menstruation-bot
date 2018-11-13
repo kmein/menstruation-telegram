@@ -27,7 +27,8 @@ except KeyError:
 
 if "MENSTRUATION_DIR" not in os.environ:
     print(
-        "Please specify configuration directory in variable MENSTRUATION_DIR.", file=sys.stderr
+        "Please specify configuration directory in variable MENSTRUATION_DIR.",
+        file=sys.stderr,
     )
     sys.exit(1)
 CONFIGURATION_DIRECTORY = os.environ["MENSTRUATION_DIR"].strip()
@@ -133,7 +134,6 @@ def extract_date(text: str) -> date:
         return date.today()
 
 
-
 def get_json(mensa_code: int, date: date) -> dict:
     request_url = "{}/{}/{}".format(ENDPOINT, mensa_code, date)
     logging.info("Requesting {}".format(request_url))
@@ -184,7 +184,7 @@ def help_handler(bot, update):
     )
 
 
-def menstrudate_handler(bot, update, args):
+def menu_handler(bot, update, args):
     text = demojize("".join(args))
     max_price, colors, tags = extract_query(text)
     menstru_date = extract_date(text)
@@ -266,6 +266,7 @@ def mensa_callback_handler(bot, update):
         )
         config.set(section, "mensa", query.data)
         logging.info("Set {}.mensa to {}".format(section, query.data))
+        menu_handler(bot, update, [])
 
 
 def error_emoji():
@@ -309,9 +310,7 @@ if __name__ == "__main__":
     bot = Updater(token=TOKEN)
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
-    bot.dispatcher.add_handler(
-        CommandHandler("menu", menstrudate_handler, pass_args=True)
-    )
+    bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
     bot.dispatcher.add_handler(
