@@ -126,11 +126,12 @@ def extract_date(text: str) -> date:
             parsed_date = date.today() + timedelta(days=1)
         elif matches.group(1):
             parsed_date = datetime.strptime(matches.group(1), "%Y-%m-%d").date()
-        else:
-            parsed_date = date.today()
-            logging.info("Malformed date in '{}', defaulting to today".format(text))
         logging.info('Extracted {} from "{}"'.format(parsed_date, text))
         return parsed_date
+    else:
+        logging.info("Malformed date in '{}', defaulting to today".format(text))
+        return date.today()
+
 
 
 def get_json(mensa_code: int, date: date) -> dict:
@@ -186,20 +187,7 @@ def help_handler(bot, update):
 def menstrudate_handler(bot, update, args):
     text = demojize("".join(args))
     max_price, colors, tags = extract_query(text)
-    try:
-        menstru_date = extract_date(text)
-    except ValueError as e:
-        logging.warning(e)
-        bot.send_message(
-            update.message.chat_id,
-            emojize(
-                "Du hast das Datum falsch angegeben. {}\nNutze dafür bitte `JJJJ-MM-TT`.".format(
-                    error_emoji()
-                )
-            ),
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        return
+    menstru_date = extract_date(text)
 
     try:
         json_object = get_json(
