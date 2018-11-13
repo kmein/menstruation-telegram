@@ -62,7 +62,7 @@ def filter_meals(max_price, colors, tags):
                 lambda meal: (
                     (not colors or meal["color"] in colors)
                     and (not tags or set(meal["tags"]) & tags)
-                    and (meal["price"]["student"] <= max_price)
+                    and ("student" in meal["price"] and meal["price"]["student"] <= max_price)
                 )
             ),
             list,
