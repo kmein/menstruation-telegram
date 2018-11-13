@@ -136,7 +136,7 @@ def get_mensas() -> Dict[str, str]:
     for uni in json_object["unis"]:
         for mensa in uni["mensas"]:
             if "Coffeebar" not in mensa["address"]:
-                code_address[mensa["code"]] = mensa["address"]
+                code_address[mensa["code"]] = mensa["address"].split(" / ")[0]
     return code_address
 
 
