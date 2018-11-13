@@ -46,9 +46,9 @@ emoji_tag = itemmap(reversed)(tag_emoji)
 
 
 def render_meal(meal):
-    return r"{color} \[{price}] _{name}_ {tags}".format(
+    return "{color} {price} _{name}_ {tags}".format(
         color=tag_emoji[meal["color"]],
-        price=locale.currency(meal["price"]["student"]),
+        price=r"\[{}]".format(locale.currency(meal["price"]["student"])) if "student" in meal["price"] else "",
         name=meal["name"],
         tags="".join(tag_emoji[tag] for tag in meal["tags"]),
     )

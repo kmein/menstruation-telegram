@@ -6,6 +6,8 @@ stdenv.mkDerivation {
     python36Packages.pip
     python36Full
     python36Packages.virtualenv
+    libffi
+    openssl
   ];
 
   shellHook = ''
