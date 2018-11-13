@@ -25,7 +25,17 @@ try:
 except KeyError:
     ENDPOINT = "http://127.0.0.1:80"
 
+if "MENSTRUATION_DIR" not in os.environ:
+    print(
+        "Please specify configuration directory in variable MENSTRUATION_DIR.", file=sys.stderr
+    )
+    sys.exit(1)
+CONFIGURATION_DIRECTORY = os.environ["MENSTRUATION_DIR"].strip()
+
+CONFIGURATION_FILE = os.path.join(CONFIGURATION_DIRECTORY, "config.ini")
+
 config = configparser.ConfigParser()
+config.read(CONFIGURATION_FILE)
 
 locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
@@ -324,4 +334,8 @@ if __name__ == "__main__":
             ),
         )
     )
-    bot.start_polling()
+    try:
+        bot.start_polling()
+    finally:
+        with open(CONFIGURATION_FILE, "w") as ini:
+            config.write(ini)
