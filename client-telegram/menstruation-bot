@@ -48,7 +48,9 @@ emoji_tag = itemmap(reversed)(tag_emoji)
 def render_meal(meal):
     return "{color} {price} _{name}_ {tags}".format(
         color=tag_emoji[meal["color"]],
-        price=r"\[{}]".format(locale.currency(meal["price"]["student"])) if "student" in meal["price"] else "",
+        price=r"\[{}]".format(locale.currency(meal["price"]["student"]))
+        if "student" in meal["price"]
+        else "",
         name=meal["name"],
         tags="".join(tag_emoji[tag] for tag in meal["tags"]),
     )
@@ -62,7 +64,10 @@ def filter_meals(max_price, colors, tags):
                 lambda meal: (
                     (not colors or meal["color"] in colors)
                     and (not tags or set(meal["tags"]) & tags)
-                    and ("student" in meal["price"] and meal["price"]["student"] <= max_price)
+                    and (
+                        "student" in meal["price"]
+                        and meal["price"]["student"] <= max_price
+                    )
                 )
             ),
             list,
@@ -255,11 +260,7 @@ def mensa_callback_handler(bot, update):
         address = get_mensas()[query.data]
         bot.answer_callback_query(
             query.id,
-            text=emojize(
-                "Mensa „{}“ ausgewählt. :flexed_biceps:\nNun kannst Du Dir mit „/menstruate“ den Speiseplan anschauen. :eyes::fork_and_knife:".format(
-                    address
-                )
-            ),
+            text=emojize("Mensa „{}“ ausgewählt. :flexed_biceps:".format(address)),
         )
         config.set(section, "mensa", query.data)
         logging.info("Set {}.mensa to {}".format(section, query.data))
