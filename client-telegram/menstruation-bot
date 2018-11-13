@@ -198,7 +198,7 @@ def menstrudate_handler(bot, update, args):
         bot.send_message(
             update.message.chat_id,
             emojize(
-                "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :index_pointing_up:".format(
+                "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :information:".format(
                     error_emoji()
                 )
             ),
@@ -247,7 +247,7 @@ def mensa_handler(bot, update, args):
     )
     bot.send_message(
         update.message.chat_id,
-        emojize("Wähle Deine Mensa aus. :ballot_box_with_check:"),
+        emojize("Wähle Deine Mensa aus. :index_pointing_up:"),
         reply_markup=mensa_chooser,
     )
 
@@ -262,7 +262,7 @@ def mensa_callback_handler(bot, update):
         address = get_mensas()[query.data]
         bot.answer_callback_query(
             query.id,
-            text=emojize("Mensa „{}“ ausgewählt. :flexed_biceps:".format(address)),
+            text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(address)),
         )
         config.set(section, "mensa", query.data)
         logging.info("Set {}.mensa to {}".format(section, query.data))
