@@ -65,8 +65,8 @@ def filter_meals(max_price, colors, tags):
                     (not colors or meal["color"] in colors)
                     and (not tags or set(meal["tags"]) & tags)
                     and (
-                        "student" in meal["price"]
-                        and meal["price"]["student"] <= max_price
+                        "student" not in meal["price"]
+                        or meal["price"]["student"] <= max_price
                     )
                 )
             ),
