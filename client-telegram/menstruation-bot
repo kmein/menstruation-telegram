@@ -266,7 +266,6 @@ def mensa_callback_handler(bot, update):
         )
         config.set(section, "mensa", query.data)
         logging.info("Set {}.mensa to {}".format(section, query.data))
-        menu_handler(bot, update, [])
 
 
 def error_emoji():
