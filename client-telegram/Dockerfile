@@ -11,5 +11,4 @@ RUN set -ex \
     && pip install -r requirements.txt \
     && rm requirements.txt
 
-CMD [ "python", "menstruation-bot" ]
-
+CMD [ "/usr/local/bin/python", "menstruation-bot" ]
