@@ -5,17 +5,15 @@ from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
 from toolz import pipe
-from toolz.curried import itemmap, filter, map
-from typing import Callable, Tuple, Set, Dict
+from toolz.curried import map
 import configparser
 from emoji import emojize, demojize
-import json
 import logging
 import os
 import random
-import re
-import requests
 import sys
+
+import client
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -38,115 +36,6 @@ config = configparser.ConfigParser()
 config.read(CONFIGURATION_FILE)
 
 logging.basicConfig(level=logging.DEBUG)
-
-tag_emoji = {
-    "vegetarian": ":carrot:",
-    "vegan": ":seedling:",
-    "organic": ":smiling_face_with_halo:",
-    "sustainable fishing": ":fish:",
-    "climate": ":globe_showing_Americas:",
-    "yellow": ":yellow_heart:",
-    "green": ":green_heart:",
-    "red": ":red_heart:",
-}
-
-emoji_tag = itemmap(reversed)(tag_emoji)
-
-
-def render_meal(meal):
-    return "{color}{price} _{name}_ {tags}".format(
-        color=tag_emoji[meal["color"]],
-        price=r" \[{:.2f} €]".format(meal["price"]["student"]).replace(".", ",")
-        if "student" in meal["price"]
-        else "",
-        name=meal["name"],
-        tags="".join(tag_emoji[tag] for tag in meal["tags"]),
-    )
-
-
-def filter_meals(max_price, colors, tags):
-    def process(group):
-        group["meals"] = pipe(
-            group["meals"],
-            filter(
-                lambda meal: (
-                    (not colors or meal["color"] in colors)
-                    and (not tags or set(meal["tags"]) & tags)
-                    and (
-                        "student" not in meal["price"]
-                        or meal["price"]["student"] <= max_price
-                    )
-                )
-            ),
-            list,
-        )
-        return group
-
-    return process
-
-
-def render_group(group):
-    if group["meals"]:
-        return "*{name}*\n{meals}\n\n".format(
-            name=group["name"].upper(),
-            meals="\n".join(map(render_meal)(group["meals"])),
-        )
-    else:
-        return ""
-
-
-def extract_query(text: str) -> Tuple[float, Set[str], Set[str]]:
-    max_price_result = re.search(r"(\d+)\s?€", text)
-    max_price = float(max_price_result.group(1) if max_price_result else "inf")
-
-    colors = set(
-        emoji_tag[emoji]
-        for emoji in re.findall(r"(:green_heart:|:yellow_heart:|:red_heart:)", text)
-    )
-    tags = set(
-        emoji_tag[emoji]
-        for emoji in re.findall(
-            r"(:carrot:|:seedling:|:smiling_face_with_halo:|:fish:|:globe_showing_Americas:)",
-            text,
-        )
-    )
-
-    logging.info('Extracted {} from "{}"'.format((max_price, colors, tags), text))
-    return max_price, colors, tags
-
-
-def extract_date(text: str) -> date:
-    matches = re.search(r"(\d{4}-\d{2}-\d{2}|today|tomorrow)", text)
-    if matches:
-        if matches.group(1) == "today":
-            parsed_date = date.today()
-        elif matches.group(1) == "tomorrow":
-            parsed_date = date.today() + timedelta(days=1)
-        elif matches.group(1):
-            parsed_date = datetime.strptime(matches.group(1), "%Y-%m-%d").date()
-        logging.info('Extracted {} from "{}"'.format(parsed_date, text))
-        return parsed_date
-    else:
-        logging.info("Malformed date in '{}', defaulting to today".format(text))
-        return date.today()
-
-
-def get_json(mensa_code: int, date: date) -> dict:
-    request_url = "{}/{}/{}".format(ENDPOINT, mensa_code, date)
-    logging.info("Requesting {}".format(request_url))
-    return json.loads(requests.get(request_url).text)
-
-
-def get_mensas() -> Dict[str, str]:
-    request_url = "{}/codes".format(ENDPOINT)
-    logging.info("Requesting {}".format(request_url))
-    json_object = json.loads(requests.get(request_url).text)
-    code_address = dict()
-    for uni in json_object["unis"]:
-        for mensa in uni["mensas"]:
-            if "Coffeebar" not in mensa["address"]:
-                code_address[mensa["code"]] = mensa["address"].split(" / ")[0]
-    return code_address
 
 
 def help_handler(bot, update):
@@ -183,11 +72,12 @@ def help_handler(bot, update):
 
 def menu_handler(bot, update, args):
     text = demojize("".join(args))
-    max_price, colors, tags = extract_query(text)
-    menstru_date = extract_date(text)
+    max_price, colors, tags = client.extract_query(text)
+    menstru_date = client.extract_date(text)
 
     try:
-        json_object = get_json(
+        json_object = client.get_json(
+            ENDPOINT,
             config.get(str(update.message.from_user.id), "mensa"), menstru_date
         )
     except configparser.NoSectionError as e:
@@ -216,8 +106,8 @@ def menu_handler(bot, update, args):
     reply = "".join(
         pipe(
             json_object["groups"],
-            map(filter_meals(max_price, colors, tags)),
-            map(render_group),
+            map(client.filter_meals(max_price, colors, tags)),
+            map(client.render_group),
         )
     )
     if reply:
@@ -233,7 +123,7 @@ def menu_handler(bot, update, args):
 
 def mensa_handler(bot, update, args):
     text = " ".join(args)
-    code_address = get_mensas()
+    code_address = client.get_mensas(ENDPOINT)
     pattern = text.strip()
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -256,7 +146,7 @@ def mensa_callback_handler(bot, update):
         if not config.has_section(section):
             config.add_section(section)
             logging.info("Created new config section: {}".format(section))
-        address = get_mensas()[query.data]
+        address = client.get_mensas(ENDPOINT)[query.data]
         bot.answer_callback_query(
             query.id,
             text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(address)),
