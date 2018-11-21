@@ -1,4 +1,3 @@
 requests
 emoji
-toolz
 python-telegram-bot

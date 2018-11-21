@@ -4,8 +4,6 @@ from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
-from toolz import pipe
-from toolz.curried import map
 import configparser
 from emoji import emojize, demojize
 import logging
@@ -104,11 +102,8 @@ def menu_handler(bot, update, args):
         return
 
     reply = "".join(
-        pipe(
-            json_object["groups"],
-            map(client.filter_meals(max_price, colors, tags)),
-            map(client.render_group),
-        )
+        client.render_group(client.filter_meals(group, max_price, colors, tags))
+        for group in json_object["groups"]
     )
     if reply:
         bot.send_message(

@@ -1,7 +1,6 @@
 import json
 import re
 import requests
-from toolz.curried import itemmap, pipe, map, filter
 from typing import Tuple, Set, Dict
 import logging
 from datetime import date, datetime, timedelta
@@ -17,7 +16,7 @@ tag_emoji = {
     "red": ":red_heart:",
 }
 
-emoji_tag = itemmap(reversed)(tag_emoji)
+emoji_tag = {emoji: tag for tag, emoji in tag_emoji.items()}
 
 
 def render_meal(meal):
@@ -31,32 +30,22 @@ def render_meal(meal):
     )
 
 
-def filter_meals(max_price, colors, tags):
-    def process(group):
-        group["meals"] = pipe(
-            group["meals"],
-            filter(
-                lambda meal: (
-                    (not colors or meal["color"] in colors)
-                    and (not tags or set(meal["tags"]) & tags)
-                    and (
-                        "student" not in meal["price"]
-                        or meal["price"]["student"] <= max_price
-                    )
-                )
-            ),
-            list,
-        )
-        return group
-
-    return process
+def filter_meals(group, max_price, colors, tags):
+    group["meals"] = [
+        meal
+        for meal in group["meals"]
+        if (not colors or meal["color"] in colors)
+        and (not tags or set(meal["tags"]) & tags)
+        and ("student" not in meal["price"] or meal["price"]["student"] <= max_price)
+    ]
+    return group
 
 
 def render_group(group):
     if group["meals"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(map(render_meal)(group["meals"])),
+            meals="\n".join(render_meal(meal) for meal in group["meals"])
         )
     else:
         return ""
@@ -114,4 +103,3 @@ def get_mensas(endpoint: str) -> Dict[str, str]:
             if "Coffeebar" not in mensa["address"]:
                 code_address[mensa["code"]] = mensa["address"].split(" / ")[0]
     return code_address
-
