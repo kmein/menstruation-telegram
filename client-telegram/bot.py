@@ -9,6 +9,7 @@ from emoji import emojize, demojize
 import logging
 import os
 import random
+import signal
 import sys
 
 import client
@@ -202,8 +203,10 @@ if __name__ == "__main__":
             ),
         )
     )
-    try:
-        bot.start_polling()
-    finally:
+
+    def dump_config():
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
+
+    signal.signal(signal.SIGTERM, dump_config)
+    bot.start_polling()
