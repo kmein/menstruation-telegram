@@ -205,6 +205,7 @@ if __name__ == "__main__":
     )
 
     def dump_config():
+        logging.warning("Help me, I'm being killed! :c")
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
 
