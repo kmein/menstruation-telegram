@@ -9,7 +9,6 @@ from emoji import emojize, demojize
 import logging
 import os
 import random
-import signal
 import sys
 
 import client
@@ -148,6 +147,8 @@ def mensa_callback_handler(bot, update):
             text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(address)),
         )
         config.set(section, "mensa", query.data)
+        with open(CONFIGURATION_FILE, "w") as ini:
+            config.write(ini)
         logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
@@ -203,11 +204,4 @@ if __name__ == "__main__":
             ),
         )
     )
-
-    def dump_config():
-        logging.warning("Help me, I'm being killed! :c")
-        with open(CONFIGURATION_FILE, "w") as ini:
-            config.write(ini)
-
-    signal.signal(signal.SIGTERM, dump_config)
     bot.start_polling()
