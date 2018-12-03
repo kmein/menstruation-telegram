@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+from emoji import emojize, demojize
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
 import configparser
-from emoji import emojize, demojize
 import logging
 import os
 import random
+import schedule
 import sys
+import threading
+import time
 
 import client
 
@@ -152,6 +155,11 @@ def mensa_callback_handler(bot, update):
         logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
+def subscribe_handler(bot, update):
+    schedule.every().day.at("9:00").do(lambda: menu_handler(bot, update, []))
+    bot.send_message(update.message.chat_id, emojize("Super! Du bekommst jetzt regelmäßig morgens den Speiseplan zugeschickt."))
+
+
 def error_emoji():
     return random.choice(
         [
@@ -195,6 +203,7 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
     bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
+    bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
     bot.dispatcher.add_handler(
         MessageHandler(
@@ -204,4 +213,14 @@ if __name__ == "__main__":
             ),
         )
     )
-    bot.start_polling()
+
+    def run_subscriptions():
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+    cron = threading.Thread(target=run_subscriptions)
+    telegram_bot = threading.Thread(target=bot.start_polling)
+
+    cron.start()
+    telegram_bot.start()
