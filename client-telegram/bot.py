@@ -79,7 +79,8 @@ def menu_handler(bot, update, args):
     try:
         json_object = client.get_json(
             ENDPOINT,
-            config.get(str(update.message.from_user.id), "mensa"), menstru_date
+            config.get(str(update.message.from_user.id), "mensa"),
+            menstru_date,
         )
     except configparser.NoSectionError as e:
         logging.warning(e)
@@ -156,8 +157,33 @@ def mensa_callback_handler(bot, update):
 
 
 def subscribe_handler(bot, update):
-    schedule.every().day.at("9:00").do(lambda: menu_handler(bot, update, []))
-    bot.send_message(update.message.chat_id, emojize("Super! Du bekommst jetzt regelmäßig morgens den Speiseplan zugeschickt."))
+    section = str(update.message.from_user.id)
+    if not config.has_section(section):
+        config.add_section(section)
+        logging.info("Created new config section: {}".format(section))
+    already_subscribed = config.getboolean(section, "subscribed", fallback=False)
+    if already_subscribed:
+        bot.send_message(update.message.chat_id, "Du hast den Speiseplan schon abonniert.")
+    else:
+        config.set(section, "subscribed", True)
+        schedule.every().day.at("9:00").tag([update.message.from_user.id]).do(
+            lambda: menu_handler(bot, update, [])
+        )
+        bot.send_message(update.message.chat_id, "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.")
+
+
+def unsubscribe_handler(bot, update):
+    section = str(update.message.from_user.id)
+    if not config.has_section(section):
+        config.add_section(section)
+        logging.info("Created new config section: {}".format(section))
+    already_subscribed = config.getboolean(section, "subscribed", fallback=False)
+    if already_subscribed:
+        config.set(section, "subscribed", False)
+        schedule.clear(tag=update.message.from_user.id)
+        bot.send_message(update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt.")
+    else:
+        bot.send_message(update.message.chat_id, "Du hast den Speiseplan gar nicht abonniert.")
 
 
 def error_emoji():
@@ -204,15 +230,9 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler))
+    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
-    bot.dispatcher.add_handler(
-        MessageHandler(
-            Filters.command,
-            lambda bot, update: bot.send_message(
-                chat_id=update.message.chat_id, text="Hä?!"
-            ),
-        )
-    )
+    bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
     def run_subscriptions():
         while True:
