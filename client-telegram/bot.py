@@ -165,7 +165,7 @@ def subscribe_handler(bot, update):
     if already_subscribed:
         bot.send_message(update.message.chat_id, "Du hast den Speiseplan schon abonniert.")
     else:
-        config.set(section, "subscribed", True)
+        config.set(section, "subscribed", "yes")
         schedule.every().day.at("9:00").tag([update.message.from_user.id]).do(
             lambda: menu_handler(bot, update, [])
         )
