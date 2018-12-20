@@ -106,9 +106,9 @@ def get_mensas(endpoint: str) -> Dict[str, str]:
     request_url = "{}/codes".format(endpoint)
     logging.info("Requesting {}".format(request_url))
     json_object = json.loads(requests.get(request_url).text)
-    code_address = dict()
+    code_name = dict()
     for uni in json_object["unis"]:
         for mensa in uni["mensas"]:
-            if "Coffeebar" not in mensa["address"]:
-                code_address[mensa["code"]] = mensa["address"].split(" / ")[0]
-    return code_address
+            if "Coffeebar" not in mensa["name"]:
+                code_name[mensa["code"]] = mensa["name"]
+    return code_name

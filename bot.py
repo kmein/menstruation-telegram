@@ -122,13 +122,13 @@ def menu_handler(bot, update, args):
 
 def mensa_handler(bot, update, args):
     text = " ".join(args)
-    code_address = client.get_mensas(ENDPOINT)
+    code_name = client.get_mensas(ENDPOINT)
     pattern = text.strip()
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=address, callback_data=code)]
-            for code, address in sorted(code_address.items(), key=lambda item: item[1])
-            if pattern.lower() in address.lower()
+            [InlineKeyboardButton(text=name, callback_data=code)]
+            for code, name in sorted(code_name.items(), key=lambda item: item[1])
+            if pattern.lower() in name.lower()
         ]
     )
     bot.send_message(
@@ -145,10 +145,10 @@ def mensa_callback_handler(bot, update):
         if not config.has_section(section):
             config.add_section(section)
             logging.info("Created new config section: {}".format(section))
-        address = client.get_mensas(ENDPOINT)[query.data]
+        name = client.get_mensas(ENDPOINT)[query.data]
         bot.answer_callback_query(
             query.id,
-            text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(address)),
+            text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
         )
         config.set(section, "mensa", query.data)
         with open(CONFIGURATION_FILE, "w") as ini:
