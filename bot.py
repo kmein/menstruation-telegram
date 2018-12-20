@@ -163,13 +163,18 @@ def subscribe_handler(bot, update):
         logging.info("Created new config section: {}".format(section))
     already_subscribed = config.getboolean(section, "subscribed", fallback=False)
     if already_subscribed:
-        bot.send_message(update.message.chat_id, "Du hast den Speiseplan schon abonniert.")
+        bot.send_message(
+            update.message.chat_id, "Du hast den Speiseplan schon abonniert."
+        )
     else:
         config.set(section, "subscribed", "yes")
         schedule.every().day.at("9:00").tag([update.message.from_user.id]).do(
             lambda: menu_handler(bot, update, [])
         )
-        bot.send_message(update.message.chat_id, "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.")
+        bot.send_message(
+            update.message.chat_id,
+            "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.",
+        )
 
 
 def unsubscribe_handler(bot, update):
@@ -181,9 +186,13 @@ def unsubscribe_handler(bot, update):
     if already_subscribed:
         config.set(section, "subscribed", False)
         schedule.clear(tag=update.message.from_user.id)
-        bot.send_message(update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt.")
+        bot.send_message(
+            update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
+        )
     else:
-        bot.send_message(update.message.chat_id, "Du hast den Speiseplan gar nicht abonniert.")
+        bot.send_message(
+            update.message.chat_id, "Du hast den Speiseplan gar nicht abonniert."
+        )
 
 
 def error_emoji():

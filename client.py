@@ -3,6 +3,7 @@ import re
 import requests
 from typing import Tuple, Set, Dict
 import logging
+import sys
 from datetime import date, datetime, timedelta
 
 tag_emoji = {
@@ -19,10 +20,16 @@ tag_emoji = {
 emoji_tag = {emoji: tag for tag, emoji in tag_emoji.items()}
 
 
+def render_cents(total_cents):
+    euros = total_cents // 100
+    cents = total_cents % 100
+    return r"{},{:2} €".format(euros, cents)
+
+
 def render_meal(meal):
     return "{color}{price} _{name}_ {tags}".format(
         color=tag_emoji[meal["color"]],
-        price=r" \[{:.2f} €]".format(meal["price"]["student"]).replace(".", ",")
+        price=r" \[{}]".format(render_cents(meal["price"]["student"]))
         if "student" in meal["price"]
         else "",
         name=meal["name"],
@@ -45,15 +52,17 @@ def render_group(group):
     if group["meals"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(render_meal(meal) for meal in group["meals"])
+            meals="\n".join(render_meal(meal) for meal in group["meals"]),
         )
     else:
         return ""
 
 
-def extract_query(text: str) -> Tuple[float, Set[str], Set[str]]:
+def extract_query(text: str) -> Tuple[int, Set[str], Set[str]]:
     max_price_result = re.search(r"(\d+)\s?€", text)
-    max_price = float(max_price_result.group(1) if max_price_result else "inf")
+    max_price = (
+        int(max_price_result.group(1) * 100) if max_price_result else sys.maxsize
+    )
 
     colors = set(
         emoji_tag[emoji]
@@ -88,7 +97,7 @@ def extract_date(text: str) -> date:
 
 
 def get_json(endpoint: str, mensa_code: int, date: date) -> dict:
-    request_url = "{}/{}/{}".format(endpoint, mensa_code, date)
+    request_url = "{}/menu/{}/{}".format(endpoint, mensa_code, date)
     logging.info("Requesting {}".format(request_url))
     return json.loads(requests.get(request_url).text)
 
