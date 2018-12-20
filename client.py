@@ -38,9 +38,9 @@ def render_meal(meal):
 
 
 def filter_meals(group, max_price, colors, tags):
-    group["meals"] = [
+    group["items"] = [
         meal
-        for meal in group["meals"]
+        for meal in group["items"]
         if (not colors or meal["color"] in colors)
         and (not tags or set(meal["tags"]) & tags)
         and ("student" not in meal["price"] or meal["price"]["student"] <= max_price)
@@ -49,10 +49,10 @@ def filter_meals(group, max_price, colors, tags):
 
 
 def render_group(group):
-    if group["meals"]:
+    if group["items"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(render_meal(meal) for meal in group["meals"]),
+            meals="\n".join(render_meal(meal) for meal in group["items"]),
         )
     else:
         return ""
@@ -108,7 +108,7 @@ def get_mensas(endpoint: str) -> Dict[str, str]:
     json_object = json.loads(requests.get(request_url).text)
     code_name = dict()
     for uni in json_object["unis"]:
-        for mensa in uni["mensas"]:
+        for mensa in uni["items"]:
             if "Coffeebar" not in mensa["name"]:
                 code_name[mensa["code"]] = mensa["name"]
     return code_name
