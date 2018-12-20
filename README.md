@@ -1,61 +1,21 @@
-# menstruation-clients
-Schluss mit Frustration! _Regel_ dein Essen mit `menstruation`!
+# Menstruation Telegram Bot
 
-Stell dir vor, du möchtest wissen, was es heute in deiner HU-Mensa gibt. Du möchtest
-aber
+## Nächste Schritte
 
-* weder die Wochenplan-PDF herunterladen müssen,
-* noch die miserabel designte Webseite des Studentenwerks aufrufen,
-* noch Fleisch essen,
-* noch mehr als 3 € bezahlen.
+- [x] Benutzerfreundlichkeit
+  - [x] Ausführlichere Hilfetexte
+  - [x] Klarere Anleitung
+- [ ] Benutzereinstellungen
+  - [x] Mensawahl
+  - [ ] Suchparameter
+  - [ ] Persistenz via [`ConfigParser`](https://docs.python.org/3/library/configparser.html)
 
-Unmöglich? Denkste!
-All das ist nun bloß _einen_ Befehl entfernt! (Und im Terminal sogar bunt!)
-
-```bash
-$ menstruate --vegetarian --max 3
-       VORSPEISEN
-2,95 € Wraps Variationen (vegetarian)
-
-       SALATE
-1,75 € Große Salatschale (vegan)
-1,05 € Kleiner Rohkostsalat (vegan)
-0,65 € Kleine Salatschale (vegan)
-
-       SUPPEN
-0,60 € Champignoncremesuppe (vegetarian)
-
-       AKTIONEN
-2,45 € Ein Germknödel mit Pflaumenmusfüllung, Mohnzucker und Vanillesauce (vegetarian)
-
-       ESSEN
-1,90 € Buchweizenpfanne mit Porree, Karotten, Rosinen und Erdnusssauce (vegan, climate)
-1,45 € Tiroler Kaiserschmarrn mit Rosinen und Apfelkompott (vegetarian)
-
-       BEILAGEN
-0,60 € Paprika-Mais-Gemüse (vegan)
-0,60 € Mangold in Rahm (vegetarian)
-0,60 € Salzkartoffeln (vegan)
-0,60 € Olivenreis (vegan)
-0,30 € Knoblauchmayonnaise (vegetarian)
-
-       DESSERTS
-0,65 € Joghurt mit Früchten (vegetarian)
-0,65 € Quarkspeise (vegetarian)
-0,65 € Pudding (vegetarian)
-0,60 € Obstkompott (vegan)
-```
-
-## client-cli
-
-TODO
-
-## client-telegram
-
-1. Beschaffe dir beim [BotFather](https://t.me/BotFather) ein Bot-Token für deinen Telegram-Bot.
-2. `$ export MENSTRUATION_TOKEN=<token>`
-3. `$ client-telegram/menstruation-bot`
-4. Schreibe deinen Bot mit `/menstruate` an und genieße deinen emojivollen Speiseplan.
-
-## To-Do
-* [ ] Allergien herausfiltern
+    ```ini
+    [chat_id]
+    mensa = 191
+    max_price = 3 €
+    colors = green,yellow
+    tags = vegan
+    ```
+- [x] Support für alle Mensen des Studentenwerkes (s. `/codes`)
+  - [x] Dialog zur Mensawahl
