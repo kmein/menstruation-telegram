@@ -30,7 +30,7 @@ def render_meal(meal):
     return "{color}{price} _{name}_ {tags}".format(
         color=tag_emoji[meal["color"]],
         price=r" \[{}]".format(render_cents(meal["price"]["student"]))
-        if "student" in meal["price"]
+        if meal["price"]
         else "",
         name=meal["name"],
         tags="".join(tag_emoji[tag] for tag in meal["tags"]),
@@ -43,7 +43,7 @@ def filter_meals(group, max_price, colors, tags):
         for meal in group["items"]
         if (not colors or meal["color"] in colors)
         and (not tags or set(meal["tags"]) & tags)
-        and ("student" not in meal["price"] or meal["price"]["student"] <= max_price)
+        and (not meal["price"] or meal["price"]["student"] <= max_price)
     ]
     return group
 
