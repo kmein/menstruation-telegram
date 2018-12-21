@@ -107,7 +107,7 @@ def menu_handler(bot, update, args):
 
     reply = "".join(
         client.render_group(client.filter_meals(group, max_price, colors, tags))
-        for group in json_object["groups"]
+        for group in json_object
     )
     if reply:
         bot.send_message(
@@ -140,12 +140,13 @@ def mensa_handler(bot, update, args):
 
 def mensa_callback_handler(bot, update):
     query = update.callback_query
+    print(query)
     if query:
         section = str(query.from_user.id)
         if not config.has_section(section):
             config.add_section(section)
             logging.info("Created new config section: {}".format(section))
-        name = client.get_mensas(ENDPOINT)[query.data]
+        name = client.get_mensas(ENDPOINT)[int(query.data)]
         bot.answer_callback_query(
             query.id,
             text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
