@@ -1,5 +1,6 @@
 with import <nixpkgs> {};
-stdenv.mkDerivation {
+let secret = import ./secret.nix;
+in stdenv.mkDerivation {
   name = "menstruation";
 
   buildInputs = [
@@ -8,6 +9,9 @@ stdenv.mkDerivation {
     python36Packages.virtualenv
     libffi
     openssl
+    (pkgs.writeShellScriptBin "telegram-test" ''
+      MENSTRUATION_DIR=/tmp MENSTRUATION_ENDPOINT=${secret.endpoint} MENSTRUATION_TOKEN=${secret.token} python3 bot.py
+    '')
   ];
 
   shellHook = ''
