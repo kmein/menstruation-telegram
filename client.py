@@ -61,7 +61,7 @@ def render_group(group):
 def extract_query(text: str) -> Tuple[int, Set[str], Set[str]]:
     max_price_result = re.search(r"(\d+)\s?€", text)
     max_price = (
-        int(max_price_result.group(1) * 100) if max_price_result else sys.maxsize
+        int(max_price_result.group(1)) * 100 if max_price_result else sys.maxsize
     )
 
     colors = set(
