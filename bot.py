@@ -98,7 +98,7 @@ def menu_handler(bot, update, args):
         bot.send_message(
             update.message.chat_id,
             emojize(
-                "Entweder ist diese Mensa noch nicht unterstützt, {}\noder es gibt an diesem dort Tag kein Essen. {}".format(
+                "Entweder ist diese Mensa noch nicht unterstützt, {}\noder es gibt an diesem Tag dort kein Essen. {}".format(
                     error_emoji(), error_emoji()
                 )
             ),
