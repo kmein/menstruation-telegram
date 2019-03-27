@@ -37,17 +37,6 @@ def render_meal(meal):
     )
 
 
-def filter_meals(group, max_price, colors, tags):
-    group["items"] = [
-        meal
-        for meal in group["items"]
-        if (not colors or meal["color"] in colors)
-        and (not tags or set(meal["tags"]) & tags)
-        and (not meal["price"] or meal["price"]["student"] <= max_price)
-    ]
-    return group
-
-
 def render_group(group):
     if group["items"]:
         return "*{name}*\n{meals}\n\n".format(
@@ -114,14 +103,13 @@ def get_json(
         },
     )
     logging.info("Requesting {}".format(response.url))
-    response.encoding = "utf-8"
-    return json.loads(response.text)
+    return response.json()
 
 
 def get_mensas(endpoint: str) -> Dict[int, str]:
     request_url = "{}/codes".format(endpoint)
     logging.info("Requesting {}".format(request_url))
-    json_object = json.loads(requests.get(request_url).text)
+    json_object = requests.get(request_url).json()
     code_name = dict()
     for uni in json_object:
         for mensa in uni["items"]:
