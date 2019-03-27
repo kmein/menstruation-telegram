@@ -73,7 +73,6 @@ def help_handler(bot, update):
 
 def menu_handler(bot, update, args):
     text = demojize("".join(args))
-    max_price, colors, tags = client.extract_query(text)
     menstru_date = client.extract_date(text)
 
     try:
@@ -81,6 +80,7 @@ def menu_handler(bot, update, args):
             ENDPOINT,
             config.get(str(update.message.from_user.id), "mensa"),
             menstru_date,
+            client.extract_query(text),
         )
     except configparser.NoSectionError as e:
         logging.warning(e)
@@ -105,10 +105,7 @@ def menu_handler(bot, update, args):
         )
         return
 
-    reply = "".join(
-        client.render_group(client.filter_meals(group, max_price, colors, tags))
-        for group in json_object
-    )
+    reply = "".join(client.render_group(group) for group in json_object)
     if reply:
         bot.send_message(
             update.message.chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN
@@ -148,8 +145,7 @@ def mensa_callback_handler(bot, update):
             logging.info("Created new config section: {}".format(section))
         name = client.get_mensas(ENDPOINT)[int(query.data)]
         bot.answer_callback_query(
-            query.id,
-            text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
+            query.id, text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name))
         )
         config.set(section, "mensa", query.data)
         with open(CONFIGURATION_FILE, "w") as ini:

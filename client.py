@@ -11,7 +11,7 @@ tag_emoji = {
     "vegan": ":seedling:",
     "organic": ":smiling_face_with_halo:",
     "sustainable fishing": ":fish:",
-    "climate": ":globe_showing_Americas:",
+    "climate friendly": ":globe_showing_Americas:",
     "yellow": ":yellow_heart:",
     "green": ":green_heart:",
     "red": ":red_heart:",
@@ -59,9 +59,11 @@ def render_group(group):
 
 
 def extract_query(text: str) -> Tuple[int, Set[str], Set[str]]:
-    max_price_result = re.search(r"(\d+)\s?€", text)
+    max_price_result = re.search(r"(\d+,?\d*)\s?€", text)
     max_price = (
-        int(max_price_result.group(1)) * 100 if max_price_result else sys.maxsize
+        int(float(max_price_result.group(1).replace(",", ".")) * 100)
+        if max_price_result
+        else sys.maxsize
     )
 
     colors = set(
@@ -96,10 +98,24 @@ def extract_date(text: str) -> date:
         return date.today()
 
 
-def get_json(endpoint: str, mensa_code: int, date: date) -> dict:
-    request_url = "{}/menu/{}/{}".format(endpoint, mensa_code, date)
-    logging.info("Requesting {}".format(request_url))
-    return json.loads(requests.get(request_url).text)
+def get_json(
+    endpoint: str, mensa_code: int, date: date, query: Tuple[int, Set[str], Set[str]]
+) -> dict:
+    max_price, colors, tags = query
+    request_url = "{}/menu".format(endpoint)
+    response = requests.get(
+        request_url,
+        params={
+            "mensa": str(mensa_code),
+            "date": date.isoformat(),
+            "max_price": str(max_price),
+            "tag": tags,
+            "color": colors,
+        },
+    )
+    logging.info("Requesting {}".format(response.url))
+    response.encoding = "utf-8"
+    return json.loads(response.text)
 
 
 def get_mensas(endpoint: str) -> Dict[int, str]:
