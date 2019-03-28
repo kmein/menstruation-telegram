@@ -106,12 +106,12 @@ def get_json(
     return response.json()
 
 
-def get_mensas(endpoint: str) -> Dict[int, str]:
+def get_mensas(endpoint: str, pattern: str) -> Dict[int, str]:
     request_url = "{}/codes".format(endpoint)
-    logging.info("Requesting {}".format(request_url))
-    json_object = requests.get(request_url).json()
+    response = requests.get(request_url, params={"pattern": pattern})
+    logging.info("Requesting {}".format(response.url))
     code_name = dict()
-    for uni in json_object:
+    for uni in response.json():
         for mensa in uni["items"]:
             if "Coffeebar" not in mensa["name"]:
                 code_name[mensa["code"]] = mensa["name"]

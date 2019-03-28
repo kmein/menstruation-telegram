@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from datetime import datetime, timedelta
+from datetime import datetime, date
 from emoji import emojize, demojize
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from typing import Tuple, Set
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
@@ -71,18 +72,26 @@ def help_handler(bot, update):
     )
 
 
+def send_menu(bot, chat_id: int, date, query: Tuple[float, Set[str], Set[str]]):
+    json_object = client.get_json(
+        ENDPOINT, int(config.get(str(chat_id), "mensa")), date, query
+    )
+    reply = "".join(client.render_group(group) for group in json_object)
+    if reply:
+        bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
+    else:
+        bot.send_message(
+            chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
+        )
+
+
 def menu_handler(bot, update, args):
     text = demojize("".join(args))
     menstru_date = client.extract_date(text)
-
+    query = client.extract_query(text)
     try:
-        json_object = client.get_json(
-            ENDPOINT,
-            config.get(str(update.message.from_user.id), "mensa"),
-            menstru_date,
-            client.extract_query(text),
-        )
-    except configparser.NoSectionError as e:
+        send_menu(bot, update.message.chat_id, menstru_date, query)
+    except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.warning(e)
         bot.send_message(
             update.message.chat_id,
@@ -92,7 +101,6 @@ def menu_handler(bot, update, args):
                 )
             ),
         )
-        return
     except ValueError as e:
         logging.warning(e)
         bot.send_message(
@@ -103,29 +111,16 @@ def menu_handler(bot, update, args):
                 )
             ),
         )
-        return
-
-    reply = "".join(client.render_group(group) for group in json_object)
-    if reply:
-        bot.send_message(
-            update.message.chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN
-        )
-    else:
-        bot.send_message(
-            update.message.chat_id,
-            emojize("Kein Essen gefunden. {}".format(error_emoji())),
-        )
 
 
 def mensa_handler(bot, update, args):
     text = " ".join(args)
-    code_name = client.get_mensas(ENDPOINT)
     pattern = text.strip()
+    code_name = client.get_mensas(ENDPOINT, pattern)
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
             for code, name in sorted(code_name.items(), key=lambda item: item[1])
-            if pattern.lower() in name.lower()
         ]
     )
     bot.send_message(
@@ -139,7 +134,7 @@ def mensa_callback_handler(bot, update):
     query = update.callback_query
     print(query)
     if query:
-        section = str(query.from_user.id)
+        section = str(query.message.chat_id)
         if not config.has_section(section):
             config.add_section(section)
             logging.info("Created new config section: {}".format(section))
@@ -154,7 +149,7 @@ def mensa_callback_handler(bot, update):
 
 
 def subscribe_handler(bot, update):
-    section = str(update.message.from_user.id)
+    section = str(update.message.chat_id)
     if not config.has_section(section):
         config.add_section(section)
         logging.info("Created new config section: {}".format(section))
@@ -165,9 +160,13 @@ def subscribe_handler(bot, update):
         )
     else:
         config.set(section, "subscribed", "yes")
-        schedule.every().day.at("9:00").tag([update.message.from_user.id]).do(
-            lambda: menu_handler(bot, update, [])
+        schedule.every().day.at("9:00").do(
+            lambda: send_menu(
+                bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
+            )
         )
+        with open(CONFIGURATION_FILE, "w") as ini:
+            config.write(ini)
         bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.",
@@ -175,14 +174,16 @@ def subscribe_handler(bot, update):
 
 
 def unsubscribe_handler(bot, update):
-    section = str(update.message.from_user.id)
+    section = str(update.message.chat_id)
     if not config.has_section(section):
         config.add_section(section)
         logging.info("Created new config section: {}".format(section))
     already_subscribed = config.getboolean(section, "subscribed", fallback=False)
     if already_subscribed:
         config.set(section, "subscribed", False)
-        schedule.clear(tag=update.message.from_user.id)
+        schedule.clear(tag=update.message.chat_id)
+        with open(CONFIGURATION_FILE, "w") as ini:
+            config.write(ini)
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
         )
@@ -239,6 +240,16 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
+
+    # config
+    for section in config.sections():
+        if config.getboolean(section, "subscribed", fallback=False):
+            logging.info("Subscribing {}".format(section))
+            schedule.every().day.at("9:00").do(
+                lambda: send_menu(
+                    bot, int(section), date.today(), (sys.maxsize, set(), set())
+                )
+            )
 
     def run_subscriptions():
         while True:
