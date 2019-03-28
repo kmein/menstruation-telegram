@@ -1,4 +1,3 @@
-import json
 import re
 import requests
 from typing import Tuple, Set, Dict
@@ -106,7 +105,7 @@ def get_json(
     return response.json()
 
 
-def get_mensas(endpoint: str, pattern: str) -> Dict[int, str]:
+def get_mensas(endpoint: str, pattern: str = "") -> Dict[int, str]:
     request_url = "{}/codes".format(endpoint)
     response = requests.get(request_url, params={"pattern": pattern})
     logging.info("Requesting {}".format(response.url))

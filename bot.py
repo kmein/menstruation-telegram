@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime, date
+from datetime import date
 from emoji import emojize, demojize
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from typing import Tuple, Set
@@ -160,7 +160,7 @@ def subscribe_handler(bot, update):
         )
     else:
         config.set(section, "subscribed", "yes")
-        schedule.every().day.at("9:00").do(
+        schedule.every().day.at("9:00").tag(section).do(
             lambda: send_menu(
                 bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
             )
@@ -180,7 +180,7 @@ def unsubscribe_handler(bot, update):
         logging.info("Created new config section: {}".format(section))
     already_subscribed = config.getboolean(section, "subscribed", fallback=False)
     if already_subscribed:
-        config.set(section, "subscribed", False)
+        config.set(section, "subscribed", "no")
         schedule.clear(tag=update.message.chat_id)
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     for section in config.sections():
         if config.getboolean(section, "subscribed", fallback=False):
             logging.info("Subscribing {}".format(section))
-            schedule.every().day.at("9:00").do(
+            schedule.every().day.at("9:00").tag(section).do(
                 lambda: send_menu(
                     bot, int(section), date.today(), (sys.maxsize, set(), set())
                 )
