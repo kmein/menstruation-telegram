@@ -2,19 +2,21 @@
 from datetime import date
 from emoji import emojize, demojize
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
-from typing import Tuple, Set
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
+from typing import Tuple, Set, List
 import configparser
 import logging
 import os
 import random
 import schedule
 import sys
+from telegram import Bot, Update
 import threading
 import time
 
+from client import Query
 import client
 
 try:
@@ -40,7 +42,7 @@ config.read(CONFIGURATION_FILE)
 logging.basicConfig(level=logging.DEBUG)
 
 
-def help_handler(bot, update):
+def help_handler(bot: Bot, update: Update):
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
@@ -72,9 +74,9 @@ def help_handler(bot, update):
     )
 
 
-def send_menu(bot, chat_id: int, date, query: Tuple[float, Set[str], Set[str]]):
+def send_menu(bot: Bot, chat_id: int, query: Query):
     json_object = client.get_json(
-        ENDPOINT, int(config.get(str(chat_id), "mensa")), date, query
+        ENDPOINT, int(config.get(str(chat_id), "mensa")), query
     )
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
@@ -85,12 +87,10 @@ def send_menu(bot, chat_id: int, date, query: Tuple[float, Set[str], Set[str]]):
         )
 
 
-def menu_handler(bot, update, args):
+def menu_handler(bot: Bot, update: Update, args: List[str]):
     text = demojize("".join(args))
-    menstru_date = client.extract_date(text)
-    query = client.extract_query(text)
     try:
-        send_menu(bot, update.message.chat_id, menstru_date, query)
+        send_menu(bot, update.message.chat_id, Query.from_text(text))
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.warning(e)
         bot.send_message(
@@ -113,7 +113,7 @@ def menu_handler(bot, update, args):
         )
 
 
-def mensa_handler(bot, update, args):
+def mensa_handler(bot: Bot, update: Update, args: List[str]):
     text = " ".join(args)
     pattern = text.strip()
     code_name = client.get_mensas(ENDPOINT, pattern)
@@ -130,7 +130,7 @@ def mensa_handler(bot, update, args):
     )
 
 
-def mensa_callback_handler(bot, update):
+def mensa_callback_handler(bot: Bot, update: Update):
     query = update.callback_query
     print(query)
     if query:
@@ -148,7 +148,7 @@ def mensa_callback_handler(bot, update):
         logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
-def subscribe_handler(bot, update):
+def subscribe_handler(bot: Bot, update: Update):
     section = str(update.message.chat_id)
     if not config.has_section(section):
         config.add_section(section)
@@ -161,9 +161,7 @@ def subscribe_handler(bot, update):
     else:
         config.set(section, "subscribed", "yes")
         schedule.every().day.at("9:00").tag(section).do(
-            lambda: send_menu(
-                bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
-            )
+            lambda: send_menu(bot, update.message.chat_id, Query())
         )
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
@@ -173,7 +171,7 @@ def subscribe_handler(bot, update):
         )
 
 
-def unsubscribe_handler(bot, update):
+def unsubscribe_handler(bot: Bot, update: Update):
     section = str(update.message.chat_id)
     if not config.has_section(section):
         config.add_section(section)
@@ -193,7 +191,7 @@ def unsubscribe_handler(bot, update):
         )
 
 
-def error_emoji():
+def error_emoji() -> str:
     return random.choice(
         [
             ":confused_face:",
@@ -246,9 +244,7 @@ if __name__ == "__main__":
         if config.getboolean(section, "subscribed", fallback=False):
             logging.info("Subscribing {}".format(section))
             schedule.every().day.at("9:00").tag(section).do(
-                lambda: send_menu(
-                    bot, int(section), date.today(), (sys.maxsize, set(), set())
-                )
+                lambda: send_menu(bot, int(section), Query())
             )
 
     def run_subscriptions():
