@@ -165,7 +165,7 @@ def subscribe_handler(bot, update):
         )
     else:
         config.set(section, "subscribed", "yes")
-        schedule.every().day.at("9:00").tag([update.message.from_user.id]).do(
+        schedule.every().day.at("09:00").tag([update.message.from_user.id]).do(
             lambda: menu_handler(bot, update, [])
         )
         bot.send_message(
