@@ -160,7 +160,7 @@ def subscribe_handler(bot, update):
         )
     else:
         config.set(section, "subscribed", "yes")
-        schedule.every().day.at("9:00").tag(section).do(
+        schedule.every().day.at("09:00").tag(section).do(
             lambda: send_menu(
                 bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
             )
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     for section in config.sections():
         if config.getboolean(section, "subscribed", fallback=False):
             logging.info("Subscribing {}".format(section))
-            schedule.every().day.at("9:00").tag(section).do(
+            schedule.every().day.at("09:00").tag(section).do(
                 lambda: send_menu(
                     bot, int(section), date.today(), (sys.maxsize, set(), set())
                 )
