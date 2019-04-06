@@ -37,7 +37,9 @@ CONFIGURATION_FILE = os.path.join(CONFIGURATION_DIRECTORY, "config.ini")
 config = configparser.ConfigParser()
 config.read(CONFIGURATION_FILE)
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
+)
 
 
 def help_handler(bot, update):
