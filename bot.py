@@ -168,7 +168,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
         config.set(section, "menu_filter", filter_text)
         schedule.every().day.at("09:00").tag(section).do(
             lambda: send_menu(
-                bot, update.message.chat_id, date.today(), Query(filter_text)
+                bot, update.message.chat_id, date.today(), Query.from_text(filter_text)
             )
         )
         with open(CONFIGURATION_FILE, "w") as ini:
@@ -255,7 +255,7 @@ if __name__ == "__main__":
             filter_text = config.get(section, "menu_filter", fallback="")
             logging.info("Subscribing {}".format(section))
             schedule.every().day.at("09:00").tag(section).do(
-                lambda: send_menu(bot, int(section), Query(filter_text))
+                lambda: send_menu(bot, int(section), Query.from_text(filter_text))
             )
 
     def run_subscriptions():
