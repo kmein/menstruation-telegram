@@ -19,6 +19,8 @@ import time
 from client import Query
 import client
 
+NOTIFICATION_TIME = "19:10"
+
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
     if not ENDPOINT:
@@ -166,7 +168,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
     else:
         config.set(section, "subscribed", "yes")
         config.set(section, "menu_filter", filter_text)
-        schedule.every().day.at("09:00").tag(section).do(
+        schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
             lambda: send_menu(
                 bot, update.message.chat_id, date.today(), Query.from_text(filter_text)
             )
@@ -254,7 +256,7 @@ if __name__ == "__main__":
         if config.getboolean(section, "subscribed", fallback=False):
             filter_text = config.get(section, "menu_filter", fallback="")
             logging.info("Subscribing {}".format(section))
-            schedule.every().day.at("09:00").tag(section).do(
+            schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
                 lambda: send_menu(bot, int(section), Query.from_text(filter_text))
             )
 
