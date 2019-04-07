@@ -52,6 +52,8 @@ def help_handler(bot, update):
         "/menu 2018-10-22": "Speiseangebote für den 22.10.2018.",
         "/help": "Dieser Hilfetext.",
         "/mensa beuth": "Auswahlmenü für die Mensen der Beuth Hochschule.",
+        "/subscribe": "Abonniere tägliche Benachrichtigungen der Speiseangebote.",
+        "/unsubscribe": "Abonnement kündigen.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
