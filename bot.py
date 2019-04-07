@@ -5,7 +5,7 @@ from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater
 from telegram.ext.filters import Filters
-from typing import Tuple, Set, List
+from typing import List
 import configparser
 import logging
 import os
@@ -39,7 +39,9 @@ CONFIGURATION_FILE = os.path.join(CONFIGURATION_DIRECTORY, "config.ini")
 config = configparser.ConfigParser()
 config.read(CONFIGURATION_FILE)
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
+)
 
 
 def help_handler(bot: Bot, update: Update):
@@ -52,6 +54,8 @@ def help_handler(bot: Bot, update: Update):
         "/menu 2018-10-22": "Speiseangebote für den 22.10.2018.",
         "/help": "Dieser Hilfetext.",
         "/mensa beuth": "Auswahlmenü für die Mensen der Beuth Hochschule.",
+        "/subscribe": "Abonniere tägliche Benachrichtigungen der Speiseangebote.",
+        "/unsubscribe": "Abonnement kündigen.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -160,8 +164,10 @@ def subscribe_handler(bot: Bot, update: Update):
         )
     else:
         config.set(section, "subscribed", "yes")
-        schedule.every().day.at("9:00").tag(section).do(
-            lambda: send_menu(bot, update.message.chat_id, Query())
+        schedule.every().day.at("09:00").tag(section).do(
+            lambda: send_menu(
+                bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
+            )
         )
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
@@ -243,7 +249,7 @@ if __name__ == "__main__":
     for section in config.sections():
         if config.getboolean(section, "subscribed", fallback=False):
             logging.info("Subscribing {}".format(section))
-            schedule.every().day.at("9:00").tag(section).do(
+            schedule.every().day.at("09:00").tag(section).do(
                 lambda: send_menu(bot, int(section), Query())
             )
 

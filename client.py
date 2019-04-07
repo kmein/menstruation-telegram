@@ -4,7 +4,6 @@ from typing import Set, Dict, List, Union, Optional
 import logging
 import re
 import requests
-import sys
 
 
 class Color(Enum):
