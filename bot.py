@@ -152,8 +152,9 @@ def mensa_callback_handler(bot: Bot, update: Update):
         logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
-def subscribe_handler(bot: Bot, update: Update):
+def subscribe_handler(bot: Bot, update: Update, args: List[str]):
     section = str(update.message.chat_id)
+    filter_text = " ".join(args)
     if not config.has_section(section):
         config.add_section(section)
         logging.info("Created new config section: {}".format(section))
@@ -164,9 +165,10 @@ def subscribe_handler(bot: Bot, update: Update):
         )
     else:
         config.set(section, "subscribed", "yes")
+        config.set(section, "menu_filter", filter_text)
         schedule.every().day.at("09:00").tag(section).do(
             lambda: send_menu(
-                bot, update.message.chat_id, date.today(), (sys.maxsize, set(), set())
+                bot, update.message.chat_id, date.today(), Query(filter_text)
             )
         )
         with open(CONFIGURATION_FILE, "w") as ini:
@@ -240,7 +242,9 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
     bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler))
+    bot.dispatcher.add_handler(
+        CommandHandler("subscribe", subscribe_handler, pass_args=True)
+    )
     bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
@@ -248,9 +252,10 @@ if __name__ == "__main__":
     # config
     for section in config.sections():
         if config.getboolean(section, "subscribed", fallback=False):
+            filter_text = config.get(section, "menu_filter", fallback="")
             logging.info("Subscribing {}".format(section))
             schedule.every().day.at("09:00").tag(section).do(
-                lambda: send_menu(bot, int(section), Query())
+                lambda: send_menu(bot, int(section), Query(filter_text))
             )
 
     def run_subscriptions():
