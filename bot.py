@@ -19,7 +19,7 @@ import time
 from client import Query
 import client
 
-NOTIFICATION_TIME = "19:10"
+NOTIFICATION_TIME = os.environ.get("MENSTRUATION_TIME", "09:00")
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
