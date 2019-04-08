@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-from datetime import date
+from datetime import datetime, time
 from emoji import emojize, demojize
+from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
-from telegram.ext import Updater
+from telegram.ext import Updater, JobQueue
 from telegram.ext.filters import Filters
 from typing import List
 import configparser
 import logging
 import os
+from functools import partial
 import random
-import schedule
 import sys
-from telegram import Bot, Update
-import threading
-import time
 
 from client import Query
 import client
 
-NOTIFICATION_TIME = os.environ.get("MENSTRUATION_TIME", "09:00")
+NOTIFICATION_TIME: time = datetime.strptime(
+    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+).time()
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -81,6 +81,7 @@ def help_handler(bot: Bot, update: Update):
 
 
 def send_menu(bot: Bot, chat_id: int, query: Query):
+    logging.info(query.params())
     json_object = client.get_json(
         ENDPOINT, int(config.get(str(chat_id), "mensa")), query
     )
@@ -154,7 +155,7 @@ def mensa_callback_handler(bot: Bot, update: Update):
         logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
-def subscribe_handler(bot: Bot, update: Update, args: List[str]):
+def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
     section = str(update.message.chat_id)
     filter_text = " ".join(args)
     if not config.has_section(section):
@@ -168,11 +169,20 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
     else:
         config.set(section, "subscribed", "yes")
         config.set(section, "menu_filter", filter_text)
-        logging.info("Subscribed {} for notification at {} with filter '{}'".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
-        schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
-            lambda: send_menu(
-                bot, update.message.chat_id, date.today(), Query.from_text(filter_text)
+        logging.info(
+            "Subscribed {} for notification at {} with filter '{}'".format(
+                update.message.chat_id, NOTIFICATION_TIME, filter_text
             )
+        )
+        job_queue.run_daily(
+            lambda updater, job: send_menu(
+                updater.bot,
+                job.context["chat_id"],
+                Query.from_text(job.context["menu_filter"]),
+            ),
+            NOTIFICATION_TIME,
+            name=section,
+            context={"chat_id": update.message.chat_id, "menu_filter": filter_text},
         )
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
@@ -182,7 +192,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
         )
 
 
-def unsubscribe_handler(bot: Bot, update: Update):
+def unsubscribe_handler(bot: Bot, update: Update, job_queue: JobQueue):
     section = str(update.message.chat_id)
     if not config.has_section(section):
         config.add_section(section)
@@ -190,8 +200,9 @@ def unsubscribe_handler(bot: Bot, update: Update):
     already_subscribed = config.getboolean(section, "subscribed", fallback=False)
     if already_subscribed:
         config.set(section, "subscribed", "no")
-        schedule.clear(tag=update.message.chat_id)
-        logging.info("Unsubscribed {}".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
+        for job in job_queue.get_jobs_by_name(section):
+            job.schedule_removal()
+        logging.info("Unsubscribed {}".format(update.message.chat_id))
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
         bot.send_message(
@@ -242,14 +253,20 @@ if __name__ == "__main__":
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
 
     bot = Updater(token=TOKEN)
+    job_queue = JobQueue(bot)
+
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
     bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
     bot.dispatcher.add_handler(
-        CommandHandler("subscribe", subscribe_handler, pass_args=True)
+        CommandHandler(
+            "subscribe", partial(subscribe_handler, job_queue=job_queue), pass_args=True
+        )
     )
-    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
+    bot.dispatcher.add_handler(
+        CommandHandler("unsubscribe", partial(unsubscribe_handler, job_queue=job_queue))
+    )
     bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
@@ -257,20 +274,22 @@ if __name__ == "__main__":
     for section in config.sections():
         if config.getboolean(section, "subscribed", fallback=False):
             filter_text = config.get(section, "menu_filter", fallback="")
-            logging.info("Subscribing {}".format(section))
-            schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
-                lambda: send_menu(bot, int(section), Query.from_text(filter_text))
+            logging.info(
+                "Subscribed {} for notification at {} with filter '{}'".format(
+                    section, NOTIFICATION_TIME, filter_text
+                )
+            )
+            job_queue.run_daily(
+                lambda updater, job: send_menu(
+                    updater.bot,
+                    job.context["chat_id"],
+                    Query.from_text(job.context["menu_filter"]),
+                ),
+                NOTIFICATION_TIME,
+                name=section,
+                context={"chat_id": int(section), "menu_filter": filter_text},
             )
 
-    def run_subscriptions():
-        logging.info("Schedule thread started")
-        while True:
-            logging.info("Running pending tasks")
-            schedule.run_pending()
-            time.sleep(60)
-
-    cron = threading.Thread(target=run_subscriptions)
-    telegram_bot = threading.Thread(target=bot.start_polling)
-
-    cron.start()
-    telegram_bot.start()
+    job_queue.start()
+    bot.start_polling()
+    bot.idle()
