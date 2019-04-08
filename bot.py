@@ -168,6 +168,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
     else:
         config.set(section, "subscribed", "yes")
         config.set(section, "menu_filter", filter_text)
+        logging.info("Subscribed {} for notification at {} with filter {}".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
         schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
             lambda: send_menu(
                 bot, update.message.chat_id, date.today(), Query.from_text(filter_text)
