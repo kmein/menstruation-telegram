@@ -168,7 +168,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str]):
     else:
         config.set(section, "subscribed", "yes")
         config.set(section, "menu_filter", filter_text)
-        logging.info("Subscribed {} for notification at {} with filter {}".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
+        logging.info("Subscribed {} for notification at {} with filter '{}'".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
         schedule.every().day.at(NOTIFICATION_TIME).tag(section).do(
             lambda: send_menu(
                 bot, update.message.chat_id, date.today(), Query.from_text(filter_text)
@@ -191,6 +191,7 @@ def unsubscribe_handler(bot: Bot, update: Update):
     if already_subscribed:
         config.set(section, "subscribed", "no")
         schedule.clear(tag=update.message.chat_id)
+        logging.info("Unsubscribed {}".format(update.message.chat_id, NOTIFICATION_TIME, filter_text))
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
         bot.send_message(
@@ -262,9 +263,11 @@ if __name__ == "__main__":
             )
 
     def run_subscriptions():
+        logging.info("Schedule thread started")
         while True:
+            logging.info("Running pending tasks")
             schedule.run_pending()
-            time.sleep(1)
+            time.sleep(60)
 
     cron = threading.Thread(target=run_subscriptions)
     telegram_bot = threading.Thread(target=bot.start_polling)
