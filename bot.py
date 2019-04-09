@@ -157,7 +157,7 @@ def mensa_callback_handler(bot: Bot, update: Update):
 
 def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
     section = str(update.message.chat_id)
-    filter_text = " ".join(args)
+    filter_text = demojize("".join(args))
     if not config.has_section(section):
         config.add_section(section)
         logging.info("Created new config section: {}".format(section))
