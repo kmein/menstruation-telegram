@@ -1,6 +1,6 @@
 FROM python:3.7-alpine3.9
 
-ADD bot.py requirements.txt /app/
+ADD bot.py client.py requirements.txt /app/
 
 ENV TZ=Europe/Berlin \
     MENSTRUATION_TOKEN='TOKEN' \
