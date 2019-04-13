@@ -58,6 +58,9 @@ def help_handler(bot: Bot, update: Update):
         "/mensa beuth": "Auswahlmenü für die Mensen der Beuth Hochschule.",
         "/subscribe": "Abonniere tägliche Benachrichtigungen der Speiseangebote.",
         "/unsubscribe": "Abonnement kündigen.",
+        "/allergens": "Allergene auswählen.",
+        "/resetallergens": "Allergene zurücksetzen",
+        "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -81,10 +84,14 @@ def help_handler(bot: Bot, update: Update):
 
 
 def send_menu(bot: Bot, chat_id: int, query: Query):
-    logging.info(query.params())
-    json_object = client.get_json(
-        ENDPOINT, int(config.get(str(chat_id), "mensa")), query
+    query.allergens = set(
+        allergen
+        for allergen in config.get(str(chat_id), "allergens", fallback="").split(",")
+        if allergen != ""
     )
+    logging.info(query.params())
+    mensa_code = config.getint(str(chat_id), "mensa")
+    json_object = client.get_json(ENDPOINT, mensa_code, query)
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
@@ -120,6 +127,57 @@ def menu_handler(bot: Bot, update: Update, args: List[str]):
         )
 
 
+def info_handler(bot: Bot, update: Update):
+    number_name = client.get_allergens(ENDPOINT)
+    code_name = client.get_mensas(ENDPOINT)
+    section = str(update.message.chat_id)
+    myallergens = set(
+        allergen
+        for allergen in config.get(section, "allergens", fallback="").split(",")
+        if allergen != ""
+    )
+    mymensa = config.getint(section, "mensa", fallback="keine")
+    subscribed = config.getboolean(section, "subscribed")
+    subscription_filter = config.get(section, "menu_filter", fallback="kein Filter")
+    bot.send_message(
+        update.message.chat_id,
+        "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
+            mensa=code_name[mymensa] if mymensa != "keine" else "keine",
+            allergens="\n".join(number_name[number] for number in myallergens),
+            subscription=emojize(
+                (":thumbs_up:" if subscribed else ":thumbs_down:")
+                + " ({})".format(subscription_filter)
+            ),
+        ),
+        parse_mode=ParseMode.MARKDOWN,
+    )
+
+
+def allergens_handler(bot: Bot, update: Update):
+    number_name = client.get_allergens(ENDPOINT)
+    allergens_chooser = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"A{number}")]
+            for number, name in number_name.items()
+        ]
+    )
+    bot.send_message(
+        update.message.chat_id,
+        emojize("Wähle Deine Allergene aus. :index_pointing_up:"),
+        reply_markup=allergens_chooser,
+    )
+
+
+def resetallergens_handler(bot: Bot, update: Update):
+    section = str(update.message.chat_id)
+    config.remove_option(section, "allergens")
+    bot.send_message(
+        update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
+    )
+    with open(CONFIGURATION_FILE, "w") as ini:
+        config.write(ini)
+
+
 def mensa_handler(bot: Bot, update: Update, args: List[str]):
     text = " ".join(args)
     pattern = text.strip()
@@ -137,7 +195,7 @@ def mensa_handler(bot: Bot, update: Update, args: List[str]):
     )
 
 
-def mensa_callback_handler(bot: Bot, update: Update):
+def callback_handler(bot: Bot, update: Update):
     query = update.callback_query
     print(query)
     if query:
@@ -145,14 +203,32 @@ def mensa_callback_handler(bot: Bot, update: Update):
         if not config.has_section(section):
             config.add_section(section)
             logging.info("Created new config section: {}".format(section))
-        name = client.get_mensas(ENDPOINT)[int(query.data)]
-        bot.answer_callback_query(
-            query.id, text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name))
-        )
-        config.set(section, "mensa", query.data)
+        if query.data.startswith("A"):
+            allergen_number = query.data.lstrip("A")
+            name = client.get_allergens(ENDPOINT)[allergen_number]
+            bot.answer_callback_query(
+                query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
+            )
+            allergens = set(
+                allergen
+                for allergen in config.get(section, "allergens", fallback="").split(",")
+                if allergen != ""
+            )
+            print(allergens)
+            allergens.add(allergen_number)
+            print(allergens)
+            config.set(section, "allergens", ",".join(allergens))
+            logging.info("Set {}.allergens to {}".format(section, allergens))
+        else:
+            name = client.get_mensas(ENDPOINT)[int(query.data)]
+            bot.answer_callback_query(
+                query.id,
+                text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
+            )
+            config.set(section, "mensa", query.data)
+            logging.info("Set {}.mensa to {}".format(section, query.data))
         with open(CONFIGURATION_FILE, "w") as ini:
             config.write(ini)
-        logging.info("Set {}.mensa to {}".format(section, query.data))
 
 
 def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
@@ -260,6 +336,9 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
     bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
+    bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
+    bot.dispatcher.add_handler(CommandHandler("info", info_handler))
+    bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
     bot.dispatcher.add_handler(
         CommandHandler(
             "subscribe", partial(subscribe_handler, job_queue=job_queue), pass_args=True
@@ -268,7 +347,7 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(
         CommandHandler("unsubscribe", partial(unsubscribe_handler, job_queue=job_queue))
     )
-    bot.dispatcher.add_handler(CallbackQueryHandler(mensa_callback_handler))
+    bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
     # config

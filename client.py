@@ -77,11 +77,13 @@ class Query:
         colors: Set[Color],
         tags: Set[Tag],
         date: Optional[date],
+        allergens: Set[str],
     ) -> None:
         self.max_price = max_price
         self.tags: Set[Tag] = tags
         self.colors: Set[Color] = colors
         self.date = date
+        self.allergens = allergens
 
     def params(self: "Query") -> Dict[str, Union[str, List[str]]]:
         params = dict()
@@ -93,6 +95,8 @@ class Query:
             params["tag"] = [str(tag) for tag in self.tags]
         if self.colors:
             params["color"] = [str(color) for color in self.colors]
+        if self.allergens:
+            params["allergen"] = [allergen for allergen in self.allergens]
         return params
 
     @staticmethod
@@ -135,6 +139,7 @@ class Query:
                 )
             ),
             date=extract_date(text),
+            allergens=set(),
         )
 
 
@@ -171,6 +176,19 @@ def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
     )
     logging.info("Requesting {}".format(response.url))
     return response.json()
+
+
+def get_allergens(endpoint: str) -> Dict[str, str]:
+    response = requests.get(f"{endpoint}/allergens")
+    logging.info("Requesting {}".format(response.url))
+    number_name = dict()
+    for allergen in response.json()["items"]:
+        number = "{}{}".format(
+            allergen["number"],
+            allergen["index"] if allergen["index"] is not None else "",
+        )
+        number_name[number] = allergen["name"]
+    return number_name
 
 
 def get_mensas(endpoint: str, pattern: str = "") -> Dict[int, str]:
