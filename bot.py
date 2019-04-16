@@ -257,7 +257,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
                 Query.from_text(job.context["menu_filter"]),
             ),
             NOTIFICATION_TIME,
-            days=(1, 2, 3, 4, 5),
+            days=(0, 1, 2, 3, 4),
             name=section,
             context={"chat_id": update.message.chat_id, "menu_filter": filter_text},
         )
@@ -366,7 +366,7 @@ if __name__ == "__main__":
                     Query.from_text(job.context["menu_filter"]),
                 ),
                 NOTIFICATION_TIME,
-                days=(1, 2, 3, 4, 5),
+                days=(0, 1, 2, 3, 4),
                 name=section,
                 context={"chat_id": int(section), "menu_filter": filter_text},
             )
