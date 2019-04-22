@@ -14,7 +14,7 @@ from functools import partial
 import random
 import sys
 
-from client import Query
+from query import Query
 import client
 
 NOTIFICATION_TIME: time = datetime.strptime(
@@ -136,13 +136,13 @@ def info_handler(bot: Bot, update: Update):
         for allergen in config.get(section, "allergens", fallback="").split(",")
         if allergen != ""
     )
-    mymensa = config.getint(section, "mensa", fallback="keine")
+    mymensa = config.getint(section, "mensa", fallback=None)
     subscribed = config.getboolean(section, "subscribed")
     subscription_filter = config.get(section, "menu_filter", fallback="kein Filter")
     bot.send_message(
         update.message.chat_id,
         "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
-            mensa=code_name[mymensa] if mymensa != "keine" else "keine",
+            mensa=code_name[mymensa] if mymensa is not None else "keine",
             allergens="\n".join(number_name[number] for number in myallergens),
             subscription=emojize(
                 (":thumbs_up:" if subscribed else ":thumbs_down:")
