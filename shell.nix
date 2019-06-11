@@ -10,7 +10,8 @@ in stdenv.mkDerivation {
     libffi
     openssl
     (pkgs.writeShellScriptBin "telegram-test" ''
-      MENSTRUATION_DIR=/tmp MENSTRUATION_ENDPOINT=${secret.endpoint} MENSTRUATION_TOKEN=${secret.token} python3 bot.py
+      ${pkgs.redis}/bin/redis-server >/dev/null &
+      MENSTRUATION_DEBUG=1 MENSTRUATION_ENDPOINT=${secret.endpoint} MENSTRUATION_TOKEN=${secret.token} python3 bot.py
     '')
   ];
 

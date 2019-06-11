@@ -7,7 +7,6 @@ from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import Updater, JobQueue
 from telegram.ext.filters import Filters
 from typing import List
-import configparser
 import logging
 import os
 from functools import partial
@@ -15,6 +14,7 @@ import random
 import sys
 
 from query import Query
+from config import MenstruationConfig
 import client
 
 NOTIFICATION_TIME: time = datetime.strptime(
@@ -28,22 +28,17 @@ try:
 except KeyError:
     ENDPOINT = "http://127.0.0.1:80"
 
-if "MENSTRUATION_DIR" not in os.environ:
-    print(
-        "Please specify configuration directory in variable MENSTRUATION_DIR.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-CONFIGURATION_DIRECTORY = os.environ["MENSTRUATION_DIR"].strip()
+try:
+    REDIS_HOST = os.environ["MENSTRUATION_REDIS"]
+except KeyError:
+    REDIS_HOST = "localhost"
 
-CONFIGURATION_FILE = os.path.join(CONFIGURATION_DIRECTORY, "config.ini")
-
-config = configparser.ConfigParser()
-config.read(CONFIGURATION_FILE)
 
 logging.basicConfig(
     level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
 )
+
+user_db = MenstruationConfig(REDIS_HOST)
 
 
 def help_handler(bot: Bot, update: Update):
@@ -84,13 +79,11 @@ def help_handler(bot: Bot, update: Update):
 
 
 def send_menu(bot: Bot, chat_id: int, query: Query):
-    query.allergens = set(
-        allergen
-        for allergen in config.get(str(chat_id), "allergens", fallback="").split(",")
-        if allergen != ""
-    )
+    query.allergens = user_db.allergens_of(chat_id)
     logging.info(query.params())
-    mensa_code = config.getint(str(chat_id), "mensa")
+    mensa_code = user_db.mensa_of(chat_id)
+    if mensa_code is None:
+        raise TypeError("No mensa selected")
     json_object = client.get_json(ENDPOINT, mensa_code, query)
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
@@ -105,7 +98,7 @@ def menu_handler(bot: Bot, update: Update, args: List[str]):
     text = demojize("".join(args))
     try:
         send_menu(bot, update.message.chat_id, Query.from_text(text))
-    except (configparser.NoSectionError, configparser.NoOptionError) as e:
+    except TypeError as e:
         logging.warning(e)
         bot.send_message(
             update.message.chat_id,
@@ -130,15 +123,12 @@ def menu_handler(bot: Bot, update: Update, args: List[str]):
 def info_handler(bot: Bot, update: Update):
     number_name = client.get_allergens(ENDPOINT)
     code_name = client.get_mensas(ENDPOINT)
-    section = str(update.message.chat_id)
-    myallergens = set(
-        allergen
-        for allergen in config.get(section, "allergens", fallback="").split(",")
-        if allergen != ""
+    myallergens = user_db.allergens_of(update.message.chat_id)
+    mymensa = user_db.mensa_of(update.message.chat_id)
+    subscribed = user_db.is_subscriber(update.message.chat_id)
+    subscription_filter = (
+        user_db.menu_filter_of(update.message.chat_id) or "kein Filter"
     )
-    mymensa = config.getint(section, "mensa", fallback=None)
-    subscribed = config.getboolean(section, "subscribed")
-    subscription_filter = config.get(section, "menu_filter", fallback="kein Filter")
     bot.send_message(
         update.message.chat_id,
         "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
@@ -169,13 +159,10 @@ def allergens_handler(bot: Bot, update: Update):
 
 
 def resetallergens_handler(bot: Bot, update: Update):
-    section = str(update.message.chat_id)
-    config.remove_option(section, "allergens")
+    user_db.reset_allergens_for(update.message.chat_id)
     bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
     )
-    with open(CONFIGURATION_FILE, "w") as ini:
-        config.write(ini)
 
 
 def mensa_handler(bot: Bot, update: Update, args: List[str]):
@@ -199,52 +186,39 @@ def callback_handler(bot: Bot, update: Update):
     query = update.callback_query
     print(query)
     if query:
-        section = str(query.message.chat_id)
-        if not config.has_section(section):
-            config.add_section(section)
-            logging.info("Created new config section: {}".format(section))
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
             name = client.get_allergens(ENDPOINT)[allergen_number]
             bot.answer_callback_query(
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
-            allergens = set(
-                allergen
-                for allergen in config.get(section, "allergens", fallback="").split(",")
-                if allergen != ""
-            )
+            allergens = user_db.allergens_of(query.message.chat_id)
             print(allergens)
             allergens.add(allergen_number)
             print(allergens)
-            config.set(section, "allergens", ",".join(allergens))
-            logging.info("Set {}.allergens to {}".format(section, allergens))
+            user_db.set_allergens_for(query.message.chat_id, allergens)
+            logging.info(
+                "Set {}.allergens to {}".format(query.message.chat_id, allergens)
+            )
         else:
             name = client.get_mensas(ENDPOINT)[int(query.data)]
             bot.answer_callback_query(
                 query.id,
                 text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
             )
-            config.set(section, "mensa", query.data)
-            logging.info("Set {}.mensa to {}".format(section, query.data))
-        with open(CONFIGURATION_FILE, "w") as ini:
-            config.write(ini)
+            user_db.set_mensa_for(query.message.chat_id, query.data)
+            logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
 
 
 def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
-    section = str(update.message.chat_id)
     filter_text = demojize("".join(args))
-    if not config.has_section(section):
-        config.add_section(section)
-        logging.info("Created new config section: {}".format(section))
-    already_subscribed = config.getboolean(section, "subscribed", fallback=False)
-    if already_subscribed:
+    if user_db.is_subscriber(update.message.chat_id):
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan schon abonniert."
         )
     else:
-        config.set(section, "subscribed", "yes")
-        config.set(section, "menu_filter", filter_text)
+        user_db.set_subscription(update.message.chat_id, True)
+        user_db.set_menu_filter(update.message.chat_id, filter_text)
         logging.info(
             "Subscribed {} for notification at {} with filter '{}'".format(
                 update.message.chat_id, NOTIFICATION_TIME, filter_text
@@ -252,17 +226,12 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
         )
         job_queue.run_daily(
             lambda updater, job: send_menu(
-                updater.bot,
-                job.context["chat_id"],
-                Query.from_text(job.context["menu_filter"]),
+                updater.bot, update.message.chat_id, Query.from_text(filter_text)
             ),
             NOTIFICATION_TIME,
             days=(0, 1, 2, 3, 4),
-            name=section,
-            context={"chat_id": update.message.chat_id, "menu_filter": filter_text},
+            name=str(update.message.chat_id),
         )
-        with open(CONFIGURATION_FILE, "w") as ini:
-            config.write(ini)
         bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.",
@@ -271,17 +240,11 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
 
 def unsubscribe_handler(bot: Bot, update: Update, job_queue: JobQueue):
     section = str(update.message.chat_id)
-    if not config.has_section(section):
-        config.add_section(section)
-        logging.info("Created new config section: {}".format(section))
-    already_subscribed = config.getboolean(section, "subscribed", fallback=False)
-    if already_subscribed:
-        config.set(section, "subscribed", "no")
+    if user_db.is_subscriber(update.message.chat_id):
+        user_db.set_subscription(update.message.chat_id, False)
         for job in job_queue.get_jobs_by_name(section):
             job.schedule_removal()
         logging.info("Unsubscribed {}".format(update.message.chat_id))
-        with open(CONFIGURATION_FILE, "w") as ini:
-            config.write(ini)
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
         )
@@ -351,24 +314,21 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
     # config
-    for section in config.sections():
-        if config.getboolean(section, "subscribed", fallback=False):
-            filter_text = config.get(section, "menu_filter", fallback="")
+    for user_id in user_db.users():
+        if user_db.is_subscriber(user_id):
+            filter_text = user_db.menu_filter_of(user_id) or ""
             logging.info(
                 "Subscribed {} for notification at {} with filter '{}'".format(
-                    section, NOTIFICATION_TIME, filter_text
+                    user_id, NOTIFICATION_TIME, filter_text
                 )
             )
             job_queue.run_daily(
                 lambda updater, job: send_menu(
-                    updater.bot,
-                    job.context["chat_id"],
-                    Query.from_text(job.context["menu_filter"]),
+                    updater.bot, user_id, Query.from_text(filter_text)
                 ),
                 NOTIFICATION_TIME,
                 days=(0, 1, 2, 3, 4),
-                name=section,
-                context={"chat_id": int(section), "menu_filter": filter_text},
+                name=str(user_id),
             )
 
     job_queue.start()
