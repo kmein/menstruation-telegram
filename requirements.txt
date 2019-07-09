@@ -1,3 +1,4 @@
 requests
 emoji
 python-telegram-bot
+redis
