@@ -212,7 +212,8 @@ def callback_handler(bot: Bot, update: Update):
 
 def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
     filter_text = demojize("".join(args))
-    if user_db.is_subscriber(update.message.chat_id):
+    isRefreshed = True if user_db.menu_filter_of(update.message.chat_id) == filter_text else False
+    if not isRefreshed and user_db.is_subscriber(update.message.chat_id):
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan schon abonniert."
         )
@@ -234,7 +235,8 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
         )
         bot.send_message(
             update.message.chat_id,
-            "Du bekommst ab jetzt täglich den Speiseplan zugeschickt.",
+            "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
+            if not isRefreshed else "Filter des Speiseplans aktualisiert.",
         )
 
 
