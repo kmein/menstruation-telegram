@@ -212,7 +212,7 @@ def callback_handler(bot: Bot, update: Update):
 
 def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
     filter_text = demojize("".join(args))
-    is_refreshed = user_db.menu_filter_of(update.message.chat_id) == filter_text
+    is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [filter_text, None]
     if not is_refreshed and user_db.is_subscriber(update.message.chat_id):
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan schon abonniert."
@@ -225,6 +225,11 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
                 update.message.chat_id, NOTIFICATION_TIME, filter_text
             )
         )
+        if is_refreshed:
+            section = str(update.message.chat_id)
+            for job in job_queue.get_jobs_by_name(section):
+                job.schedule_removal()
+            logging.info("Subscription updated {}".format(update.message.chat_id))
         job_queue.run_daily(
             lambda updater, job: send_menu(
                 updater.bot, update.message.chat_id, Query.from_text(filter_text)
