@@ -241,7 +241,7 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
         bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
-            if not is_refreshed else "Filter des Speiseplans aktualisiert.",
+            if not is_refreshed else "Du hast dein Abonnement erfolgreich aktualisiert.",
         )
 
 
