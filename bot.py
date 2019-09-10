@@ -233,14 +233,21 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
             for job in job_queue.get_jobs_by_name(section):
                 job.schedule_removal()
             logging.info("Subscription updated {}".format(update.message.chat_id))
-        job_queue.run_daily(
-            lambda updater, job: send_menu(
-                updater.bot, update.message.chat_id, Query.from_text(filter_text)
-            ),
-            NOTIFICATION_TIME,
-            days=(0, 1, 2, 3, 4),
-            name=str(update.message.chat_id),
-        )
+
+        user_jobs = job_queue.get_jobs_by_name(str(update.message.chat_id))
+        if len(user_jobs) > 0:
+            for job in user_jobs:
+                job.enabled = True
+        else:
+            job_queue.run_daily(
+                lambda updater, job: send_menu(
+                    updater.bot, update.message.chat_id, Query.from_text(filter_text)
+                ),
+                NOTIFICATION_TIME,
+                days=(0, 1, 2, 3, 4),
+                name=str(update.message.chat_id),
+            )
+
         bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
@@ -254,7 +261,7 @@ def unsubscribe_handler(bot: Bot, update: Update, job_queue: JobQueue):
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
         for job in job_queue.get_jobs_by_name(section):
-            job.schedule_removal()
+            job.enabled = False
         logging.info("Unsubscribed {}".format(update.message.chat_id))
         bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
