@@ -335,7 +335,7 @@ if __name__ == "__main__":
             )
             job_queue.run_daily(
                 lambda updater, job: send_menu(
-                    updater.bot, user_id, Query.from_text(filter_text)
+                    updater.bot, job.name, Query.from_text(filter_text)
                 ),
                 NOTIFICATION_TIME,
                 days=(0, 1, 2, 3, 4),
