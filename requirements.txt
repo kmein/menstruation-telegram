@@ -1,4 +1,4 @@
 requests
 emoji
-python-telegram-bot==11.1
+python-telegram-bot==12
 redis
