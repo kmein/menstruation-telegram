@@ -277,10 +277,8 @@ def status_handler(bot: Bot, update: Update, job_queue: JobQueue):
     # section = str(update.message.chat_id)
     bot.send_message(
         update.message.chat_id,
-        f"""
-    Registered: {len(user_db.users())}
-    Subscribed: {len(job for job in job_queue.jobs() if job.enabled)}
-    """,
+        f"Registered: {len(user_db.users())}\n"
+        f"Subscribed: {len(list(job for job in job_queue.jobs() if job.enabled))}",
     )
 
 
