@@ -272,6 +272,18 @@ def unsubscribe_handler(bot: Bot, update: Update, job_queue: JobQueue):
         )
 
 
+def status_handler(bot: Bot, update: Update, job_queue: JobQueue):
+    print(job_queue)
+    # section = str(update.message.chat_id)
+    bot.send_message(
+        update.message.chat_id,
+        f"""
+    Registered: {len(user_db.users())}
+    Subscribed: {len(job for job in job_queue.jobs() if job.enabled)}
+    """,
+    )
+
+
 def error_emoji() -> str:
     return random.choice(
         [
@@ -327,6 +339,9 @@ if __name__ == "__main__":
     )
     bot.dispatcher.add_handler(
         CommandHandler("unsubscribe", partial(unsubscribe_handler, job_queue=job_queue))
+    )
+    bot.dispatcher.add_handler(
+        CommandHandler("status", partial(status_handler, job_queue=job_queue))
     )
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
