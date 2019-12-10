@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
+import logging
+import os
+import random
+import sys
 from datetime import datetime, time
+from functools import partial
+
 from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
@@ -11,16 +17,10 @@ from telegram.ext import (
 )
 from telegram.ext import Updater, JobQueue
 from telegram.ext.filters import Filters
-from typing import List
-import logging
-import os
-from functools import partial
-import random
-import sys
 
-from query import Query
-from config import MenstruationConfig
 import client
+from config import MenstruationConfig
+from query import Query
 
 NOTIFICATION_TIME: time = datetime.strptime(
     os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
