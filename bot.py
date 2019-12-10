@@ -235,17 +235,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
         )
         if is_refreshed:
             section = str(update.message.chat_id)
-            for job in context.job_queue.get_jobs_by_name(section):
-                job.schedule_removal()
             logging.info("Subscription updated {}".format(update.message.chat_id))
-        context.job_queue.run_daily(
-            lambda updater, job: send_menu(
-                updater.bot, update.message.chat_id, Query.from_text(filter_text)
-            ),
-            NOTIFICATION_TIME,
-            days=(0, 1, 2, 3, 4),
-            name=str(update.message.chat_id),
-        )
         context.bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
@@ -342,23 +332,23 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
-    # config
-    for user_id in user_db.users():
-        if user_db.is_subscriber(user_id):
-            filter_text = user_db.menu_filter_of(user_id) or ""
-            logging.info(
-                "Subscribed {} for notification at {} with filter '{}'".format(
-                    user_id, NOTIFICATION_TIME, filter_text
-                )
-            )
-            job_queue.run_daily(
-                lambda updater, job: send_menu(
-                    updater.bot, job.name, Query.from_text(filter_text)
-                ),
-                NOTIFICATION_TIME,
-                days=(0, 1, 2, 3, 4),
-                name=str(user_id),
-            )
+    # config deprecated
+    # for user_id in user_db.users():
+    #     if user_db.is_subscriber(user_id):
+    #         filter_text = user_db.menu_filter_of(user_id) or ""
+    #         logging.info(
+    #             "Subscribed {} for notification at {} with filter '{}'".format(
+    #                 user_id, NOTIFICATION_TIME, filter_text
+    #             )
+    #         )
+    #         job_queue.run_daily(
+    #             lambda updater, job: send_menu(
+    #                 updater.bot, job.name, Query.from_text(filter_text)
+    #             ),
+    #             NOTIFICATION_TIME,
+    #             days=(0, 1, 2, 3, 4),
+    #             name=str(user_id),
+    #         )
 
     job_queue.start()
     bot.start_polling()
