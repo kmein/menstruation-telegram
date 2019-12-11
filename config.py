@@ -43,3 +43,6 @@ class MenstruationConfig:
 
     def users(self) -> List[int]:
         return [int(user_id_str) for user_id_str in self.redis.keys()]
+
+    def remove_user(self, user_id: int) -> int:
+        return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
