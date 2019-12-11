@@ -47,7 +47,7 @@ user_db = MenstruationConfig(REDIS_HOST)
 
 
 def help_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED help_handler" +
+    logging.debug(f"Entering: help_handler" +
                   f", chat_id: {update.message.chat_id}")
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -102,7 +102,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
 
 
 def menu_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED menu_handler" +
+    logging.debug(f"Entering: menu_handler" +
                   f", chat_id: {update.message.chat_id}")
     text = demojize("".join(context.args))
     try:
@@ -130,7 +130,7 @@ def menu_handler(update: Update, context: CallbackContext):
 
 
 def info_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED info_handler" +
+    logging.debug(f"Entering: info_handler" +
                   f", chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     code_name = client.get_mensas(ENDPOINT)
@@ -155,7 +155,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 
 def allergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED allergens_handler" +
+    logging.debug(f"Entering: allergens_handler" +
                   f", chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     allergens_chooser = InlineKeyboardMarkup(
@@ -172,7 +172,7 @@ def allergens_handler(update: Update, context: CallbackContext):
 
 
 def resetallergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED resetallergens_handler" +
+    logging.debug(f"Entering: resetallergens_handler" +
                   f", chat_id: {update.message.chat_id}")
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
@@ -181,7 +181,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 
 
 def mensa_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED mensa_handler" +
+    logging.debug(f"Entering: mensa_handler" +
                   f", chat_id: {update.message.chat_id}")
     text = " ".join(context.args)
     pattern = text.strip()
@@ -200,7 +200,7 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 
 def callback_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED callback_handler" +
+    logging.debug(f"Entering: callback_handler" +
                   f", chat_id: {update.message.chat_id}")
     query = update.callback_query
     if query:
@@ -227,7 +227,7 @@ def callback_handler(update: Update, context: CallbackContext):
 
 
 def subscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED subscribe_handler" +
+    logging.debug(f"Entering: subscribe_handler" +
                   f", chat_id: {update.message.chat_id}")
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
@@ -258,7 +258,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED status_handler" +
+    logging.debug(f"Entering: status_handler" +
                   f", chat_id: {update.message.chat_id}"
                   f", is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
@@ -274,7 +274,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 
 def status_handler(update: Update, context: CallbackContext):
-    logging.debug(f"ENTERED status_handler" +
+    logging.debug(f"Entering: status_handler" +
                   f", chat_id: {update.message.chat_id}" +
                   f", user_db.users(): {user_db.users()}" +
                   f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}")
