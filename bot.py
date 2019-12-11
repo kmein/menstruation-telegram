@@ -49,6 +49,7 @@ user_db = MenstruationConfig(REDIS_HOST)
 def help_handler(update: Update, context: CallbackContext):
     logging.debug(f"Entering: help_handler" +
                   f", chat_id: {update.message.chat_id}")
+
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
@@ -63,6 +64,7 @@ def help_handler(update: Update, context: CallbackContext):
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
+        "/status": "Status des Bots",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -324,7 +326,6 @@ if __name__ == "__main__":
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
 
     bot = Updater(token=TOKEN, use_context=True)
-    job_queue = JobQueue(bot)
 
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
@@ -343,20 +344,6 @@ if __name__ == "__main__":
     # for user_id in user_db.users():
     #     if user_db.is_subscriber(user_id):
     #         filter_text = user_db.menu_filter_of(user_id) or ""
-    #         logging.info(
-    #             "Subscribed {} for notification at {} with filter '{}'".format(
-    #                 user_id, NOTIFICATION_TIME, filter_text
-    #             )
-    #         )
-    #         job_queue.run_daily(
-    #             lambda updater, job: send_menu(
-    #                 updater.bot, job.name, Query.from_text(filter_text)
-    #             ),
-    #             NOTIFICATION_TIME,
-    #             days=(0, 1, 2, 3, 4),
-    #             name=str(user_id),
-    #         )
 
-    # job_queue.start()
     bot.start_polling()
     bot.idle()
