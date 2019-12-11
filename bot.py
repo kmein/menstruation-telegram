@@ -242,11 +242,11 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    section = str(update.message.chat_id)
+    logging.debug(f"ENTERED status_handler" +
+                  f"\nchat_id: {update.message.chat_id}"
+                  f"\nis_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
-        for job in context.job_queue.get_jobs_by_name(section):
-            job.enabled = False
         logging.info("Unsubscribed {}".format(update.message.chat_id))
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
