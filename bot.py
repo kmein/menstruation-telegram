@@ -189,7 +189,6 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    print(query)
     if query:
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
@@ -198,9 +197,7 @@ def callback_handler(update: Update, context: CallbackContext):
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
             allergens = user_db.allergens_of(query.message.chat_id)
-            print(allergens)
             allergens.add(allergen_number)
-            print(allergens)
             user_db.set_allergens_for(query.message.chat_id, allergens)
             logging.info(
                 "Set {}.allergens to {}".format(query.message.chat_id, allergens)
@@ -260,10 +257,8 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
         )
 
 
-def status_handler(bot: Bot, update: Update, job_queue: JobQueue):
-    print(job_queue)
-    # section = str(update.message.chat_id)
-    bot.send_message(
+def status_handler(update: Update, context: CallbackContext):
+    context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
         f"Subscribed: {len(list(job for job in job_queue.jobs() if job.enabled))}",
