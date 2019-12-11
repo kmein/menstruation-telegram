@@ -258,10 +258,14 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 
 def status_handler(update: Update, context: CallbackContext):
+    logging.debug(f"ENTERED status_handler" +
+                  f"\nupdate.message.chat_id: {update.message.chat_id}" +
+                  f"\nuser_db.users(): {user_db.users()}" +
+                  f"\nuser is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}")
     context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
-        f"Subscribed: {len(list(job for job in job_queue.jobs() if job.enabled))}",
+        f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}",
     )
 
 
