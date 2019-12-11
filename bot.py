@@ -313,17 +313,9 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
     bot.dispatcher.add_handler(CommandHandler("info", info_handler))
     bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
-    bot.dispatcher.add_handler(
-        CommandHandler(
-            "subscribe", partial(subscribe_handler, job_queue=job_queue), pass_args=True
-        )
-    )
-    bot.dispatcher.add_handler(
-        CommandHandler("unsubscribe", partial(unsubscribe_handler, job_queue=job_queue))
-    )
-    bot.dispatcher.add_handler(
-        CommandHandler("status", partial(status_handler, job_queue=job_queue))
-    )
+    bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler, pass_args=True))
+    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
+    bot.dispatcher.add_handler(CommandHandler("status", status_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
@@ -345,6 +337,6 @@ if __name__ == "__main__":
     #             name=str(user_id),
     #         )
 
-    job_queue.start()
+    # job_queue.start()
     bot.start_polling()
     bot.idle()
