@@ -9,6 +9,7 @@ from functools import partial
 from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.error import Unauthorized
 from telegram.ext import (
     CommandHandler,
     MessageHandler,
@@ -21,6 +22,7 @@ from telegram.ext.filters import Filters
 import client
 from config import MenstruationConfig
 from query import Query
+from time import sleep
 
 NOTIFICATION_TIME: time = datetime.strptime(
     os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
@@ -89,8 +91,8 @@ def help_handler(update: Update, context: CallbackContext):
 
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
-    logging.info(query.params())
     mensa_code = user_db.mensa_of(chat_id)
+    logging.debug(f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}")
     if mensa_code is None:
         raise TypeError("No mensa selected")
     json_object = client.get_json(ENDPOINT, mensa_code, query)
@@ -202,8 +204,6 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 
 def callback_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: callback_handler" +
-                  f", chat_id: {update.message.chat_id}")
     query = update.callback_query
     if query:
         if query.data.startswith("A"):
@@ -287,6 +287,19 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
+def notify_subscribers(bot: Updater):
+    for user_id in user_db.users():
+        if user_db.is_subscriber(user_id):
+            filter_text = user_db.menu_filter_of(user_id) or ""
+            try:
+                send_menu(bot.bot, user_id, Query.from_text(filter_text))
+            except Unauthorized as err:
+                logging.exception(f"{user_id} has blocked the bot. Removed Subscription.")
+                user_db.set_subscription(user_id, False)
+                continue
+            sleep(1.0)
+
+
 def error_emoji() -> str:
     return random.choice(
         [
@@ -339,11 +352,6 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("status", status_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
-
-    # config deprecated
-    # for user_id in user_db.users():
-    #     if user_db.is_subscriber(user_id):
-    #         filter_text = user_db.menu_filter_of(user_id) or ""
 
     bot.start_polling()
     bot.idle()
