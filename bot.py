@@ -287,18 +287,20 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
-def notify_subscribers(bot: Updater):
+def notify_subscribers(context: CallbackContext):
+    logging.debug(f"Entering: notify_subscribers")
     for user_id in user_db.users():
         if user_db.is_subscriber(user_id):
+            logging.debug(f"Notify: {user_id}")
             filter_text = user_db.menu_filter_of(user_id) or ""
             try:
-                send_menu(bot.bot, user_id, Query.from_text(filter_text))
-            except Unauthorized as err:
+                send_menu(context.bot, user_id, Query.from_text(filter_text))
+            except Unauthorized:
                 logging.exception(f"{user_id} has blocked the bot. Removed Subscription.")
                 user_db.set_subscription(user_id, False)
                 continue
             sleep(1.0)
-
+    logging.debug(f"Leaving: notify_subscribers")
 
 def error_emoji() -> str:
     return random.choice(
@@ -339,6 +341,7 @@ if __name__ == "__main__":
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
 
     bot = Updater(token=TOKEN, use_context=True)
+    job_queue = bot.job_queue
 
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
@@ -353,5 +356,15 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
+    logging.debug(f"NOTIFICATION_TIME: {NOTIFICATION_TIME}")
+
+    job_queue.run_daily(
+        notify_subscribers,
+        NOTIFICATION_TIME,
+        days=(0, 1, 2, 3, 4),
+        name='notify_subscribers',
+    )
+
+    job_queue.start()
     bot.start_polling()
     bot.idle()
