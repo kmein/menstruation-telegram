@@ -4,7 +4,7 @@ import os
 import random
 import sys
 from datetime import datetime, time
-from functools import partial
+from time import sleep
 
 from emoji import emojize, demojize
 from telegram import Bot, Update
@@ -16,13 +16,12 @@ from telegram.ext import (
     CallbackQueryHandler,
     CallbackContext,
 )
-from telegram.ext import Updater, JobQueue
+from telegram.ext import Updater
 from telegram.ext.filters import Filters
 
 import client
 from config import MenstruationConfig
 from query import Query
-from time import sleep
 
 NOTIFICATION_TIME: time = datetime.strptime(
     os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
@@ -301,6 +300,7 @@ def notify_subscribers(context: CallbackContext):
                 continue
             sleep(1.0)
     logging.debug(f"Leaving: notify_subscribers")
+
 
 def error_emoji() -> str:
     return random.choice(
