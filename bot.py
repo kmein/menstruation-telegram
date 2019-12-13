@@ -48,8 +48,7 @@ user_db = MenstruationConfig(REDIS_HOST)
 
 
 def help_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: help_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: help_handler, chat_id: {update.message.chat_id}")
 
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -65,7 +64,6 @@ def help_handler(update: Update, context: CallbackContext):
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
-        "/status": "Status des Bots",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -105,8 +103,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
 
 
 def menu_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: menu_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: menu_handler, chat_id: {update.message.chat_id}")
     text = demojize("".join(context.args))
     try:
         send_menu(context.bot, update.message.chat_id, Query.from_text(text))
@@ -133,8 +130,7 @@ def menu_handler(update: Update, context: CallbackContext):
 
 
 def info_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: info_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: info_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     code_name = client.get_mensas(ENDPOINT)
     myallergens = user_db.allergens_of(update.message.chat_id)
@@ -158,8 +154,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 
 def allergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: allergens_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: allergens_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -175,8 +170,7 @@ def allergens_handler(update: Update, context: CallbackContext):
 
 
 def resetallergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: resetallergens_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}")
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
@@ -184,8 +178,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 
 
 def mensa_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: mensa_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: mensa_handler, chat_id: {update.message.chat_id}")
     text = " ".join(context.args)
     pattern = text.strip()
     code_name = client.get_mensas(ENDPOINT, pattern)
@@ -228,8 +221,7 @@ def callback_handler(update: Update, context: CallbackContext):
 
 
 def subscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: subscribe_handler" +
-                  f", chat_id: {update.message.chat_id}")
+    logging.debug(f"Entering: subscribe_handler, chat_id: {update.message.chat_id}")
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
         filter_text,
@@ -259,9 +251,11 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: status_handler" +
-                  f", chat_id: {update.message.chat_id}"
-                  f", is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
+    logging.debug(
+        ", ".join(["Entering: status_handler", f"chat_id: {update.message.chat_id}",
+                   f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
+                   ])
+    )
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
         logging.info("Unsubscribed {}".format(update.message.chat_id))
@@ -275,10 +269,11 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 
 def status_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: status_handler" +
-                  f", chat_id: {update.message.chat_id}" +
-                  f", user_db.users(): {user_db.users()}" +
-                  f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}")
+    logging.debug(
+        ", ".join(["Entering: status_handler",f", chat_id: {update.message.chat_id}",
+                   f", user_db.users(): {user_db.users()}",
+                   f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}"])
+    )
     context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
@@ -287,7 +282,7 @@ def status_handler(update: Update, context: CallbackContext):
 
 
 def notify_subscribers(context: CallbackContext):
-    logging.debug(f"Entering: notify_subscribers")
+    logging.debug("Entering: notify_subscribers")
     for user_id in user_db.users():
         if user_db.is_subscriber(user_id):
             logging.debug(f"Notify: {user_id}")
@@ -299,7 +294,7 @@ def notify_subscribers(context: CallbackContext):
                 user_db.set_subscription(user_id, False)
                 continue
             sleep(1.0)
-    logging.debug(f"Leaving: notify_subscribers")
+    logging.debug("Leaving: notify_subscribers")
 
 
 def error_emoji() -> str:
