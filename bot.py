@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
+import logging
+import os
+import random
+import sys
 from datetime import datetime, time
+from time import sleep
+
 from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler
-from telegram.ext import Updater, JobQueue
+from telegram.error import Unauthorized
+from telegram.ext import (
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    CallbackContext,
+)
+from telegram.ext import Updater
 from telegram.ext.filters import Filters
-from typing import List
-import logging
-import os
-from functools import partial
-import random
-import sys
 
-from query import Query
-from config import MenstruationConfig
 import client
+from config import MenstruationConfig
+from query import Query
 
 NOTIFICATION_TIME: time = datetime.strptime(
     os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
@@ -41,7 +47,9 @@ logging.basicConfig(
 user_db = MenstruationConfig(REDIS_HOST)
 
 
-def help_handler(bot: Bot, update: Update):
+def help_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: help_handler, chat_id: {update.message.chat_id}")
+
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
@@ -67,7 +75,7 @@ def help_handler(bot: Bot, update: Update):
         ":green_heart:": "Lebensmittelampel grün",
         ":red_heart:": "Lebensmittelampel rot",
     }
-    bot.send_message(
+    context.bot.send_message(
         update.message.chat_id,
         emojize(
             "*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
@@ -80,8 +88,8 @@ def help_handler(bot: Bot, update: Update):
 
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
-    logging.info(query.params())
     mensa_code = user_db.mensa_of(chat_id)
+    logging.debug(f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}")
     if mensa_code is None:
         raise TypeError("No mensa selected")
     json_object = client.get_json(ENDPOINT, mensa_code, query)
@@ -94,13 +102,14 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
         )
 
 
-def menu_handler(bot: Bot, update: Update, args: List[str]):
-    text = demojize("".join(args))
+def menu_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: menu_handler, chat_id: {update.message.chat_id}")
+    text = demojize("".join(context.args))
     try:
-        send_menu(bot, update.message.chat_id, Query.from_text(text))
+        send_menu(context.bot, update.message.chat_id, Query.from_text(text))
     except TypeError as e:
         logging.warning(e)
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id,
             emojize(
                 "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :information:".format(
@@ -110,7 +119,7 @@ def menu_handler(bot: Bot, update: Update, args: List[str]):
         )
     except ValueError as e:
         logging.warning(e)
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id,
             emojize(
                 "Entweder ist diese Mensa noch nicht unterstützt, {}\noder es gibt an diesem Tag dort kein Essen. {}".format(
@@ -120,7 +129,8 @@ def menu_handler(bot: Bot, update: Update, args: List[str]):
         )
 
 
-def info_handler(bot: Bot, update: Update):
+def info_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: info_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     code_name = client.get_mensas(ENDPOINT)
     myallergens = user_db.allergens_of(update.message.chat_id)
@@ -129,7 +139,7 @@ def info_handler(bot: Bot, update: Update):
     subscription_filter = (
         user_db.menu_filter_of(update.message.chat_id) or "kein Filter"
     )
-    bot.send_message(
+    context.bot.send_message(
         update.message.chat_id,
         "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
             mensa=code_name[mymensa] if mymensa is not None else "keine",
@@ -143,7 +153,8 @@ def info_handler(bot: Bot, update: Update):
     )
 
 
-def allergens_handler(bot: Bot, update: Update):
+def allergens_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: allergens_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -151,22 +162,24 @@ def allergens_handler(bot: Bot, update: Update):
             for number, name in number_name.items()
         ]
     )
-    bot.send_message(
+    context.bot.send_message(
         update.message.chat_id,
         emojize("Wähle Deine Allergene aus. :index_pointing_up:"),
         reply_markup=allergens_chooser,
     )
 
 
-def resetallergens_handler(bot: Bot, update: Update):
+def resetallergens_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}")
     user_db.reset_allergens_for(update.message.chat_id)
-    bot.send_message(
+    context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
     )
 
 
-def mensa_handler(bot: Bot, update: Update, args: List[str]):
-    text = " ".join(args)
+def mensa_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: mensa_handler, chat_id: {update.message.chat_id}")
+    text = " ".join(context.args)
     pattern = text.strip()
     code_name = client.get_mensas(ENDPOINT, pattern)
     mensa_chooser = InlineKeyboardMarkup(
@@ -175,34 +188,31 @@ def mensa_handler(bot: Bot, update: Update, args: List[str]):
             for code, name in sorted(code_name.items(), key=lambda item: item[1])
         ]
     )
-    bot.send_message(
+    context.bot.send_message(
         update.message.chat_id,
         emojize("Wähle Deine Mensa aus. :index_pointing_up:"),
         reply_markup=mensa_chooser,
     )
 
 
-def callback_handler(bot: Bot, update: Update):
+def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    print(query)
     if query:
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
             name = client.get_allergens(ENDPOINT)[allergen_number]
-            bot.answer_callback_query(
+            context.bot.answer_callback_query(
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
             allergens = user_db.allergens_of(query.message.chat_id)
-            print(allergens)
             allergens.add(allergen_number)
-            print(allergens)
             user_db.set_allergens_for(query.message.chat_id, allergens)
             logging.info(
                 "Set {}.allergens to {}".format(query.message.chat_id, allergens)
             )
         else:
             name = client.get_mensas(ENDPOINT)[int(query.data)]
-            bot.answer_callback_query(
+            context.bot.answer_callback_query(
                 query.id,
                 text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
             )
@@ -210,14 +220,15 @@ def callback_handler(bot: Bot, update: Update):
             logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
 
 
-def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQueue):
-    filter_text = demojize("".join(args))
+def subscribe_handler(update: Update, context: CallbackContext):
+    logging.debug(f"Entering: subscribe_handler, chat_id: {update.message.chat_id}")
+    filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
         filter_text,
         None,
     ]
     if not is_refreshed and user_db.is_subscriber(update.message.chat_id):
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan schon abonniert."
         )
     else:
@@ -230,25 +241,8 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
         )
         if is_refreshed:
             section = str(update.message.chat_id)
-            for job in job_queue.get_jobs_by_name(section):
-                job.schedule_removal()
             logging.info("Subscription updated {}".format(update.message.chat_id))
-
-        user_jobs = job_queue.get_jobs_by_name(str(update.message.chat_id))
-        if len(user_jobs) > 0:
-            for job in user_jobs:
-                job.enabled = True
-        else:
-            job_queue.run_daily(
-                lambda updater, job: send_menu(
-                    updater.bot, update.message.chat_id, Query.from_text(filter_text)
-                ),
-                NOTIFICATION_TIME,
-                days=(0, 1, 2, 3, 4),
-                name=str(update.message.chat_id),
-            )
-
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
             if not is_refreshed
@@ -256,30 +250,51 @@ def subscribe_handler(bot: Bot, update: Update, args: List[str], job_queue: JobQ
         )
 
 
-def unsubscribe_handler(bot: Bot, update: Update, job_queue: JobQueue):
-    section = str(update.message.chat_id)
+def unsubscribe_handler(update: Update, context: CallbackContext):
+    logging.debug(
+        ", ".join(["Entering: status_handler", f"chat_id: {update.message.chat_id}",
+                   f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
+                   ])
+    )
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
-        for job in job_queue.get_jobs_by_name(section):
-            job.enabled = False
         logging.info("Unsubscribed {}".format(update.message.chat_id))
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
         )
     else:
-        bot.send_message(
+        context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan gar nicht abonniert."
         )
 
 
-def status_handler(bot: Bot, update: Update, job_queue: JobQueue):
-    print(job_queue)
-    # section = str(update.message.chat_id)
-    bot.send_message(
+def status_handler(update: Update, context: CallbackContext):
+    logging.debug(
+        ", ".join(["Entering: status_handler",f", chat_id: {update.message.chat_id}",
+                   f", user_db.users(): {user_db.users()}",
+                   f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}"])
+    )
+    context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
-        f"Subscribed: {len(list(job for job in job_queue.jobs() if job.enabled))}",
+        f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}",
     )
+
+
+def notify_subscribers(context: CallbackContext):
+    logging.debug("Entering: notify_subscribers")
+    for user_id in user_db.users():
+        if user_db.is_subscriber(user_id):
+            logging.debug(f"Notify: {user_id}")
+            filter_text = user_db.menu_filter_of(user_id) or ""
+            try:
+                send_menu(context.bot, user_id, Query.from_text(filter_text))
+            except Unauthorized:
+                logging.exception(f"{user_id} has blocked the bot. Removed Subscription.")
+                user_db.set_subscription(user_id, False)
+                continue
+            sleep(1.0)
+    logging.debug("Leaving: notify_subscribers")
 
 
 def error_emoji() -> str:
@@ -320,8 +335,8 @@ if __name__ == "__main__":
         sys.exit(1)
     TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
 
-    bot = Updater(token=TOKEN)
-    job_queue = JobQueue(bot)
+    bot = Updater(token=TOKEN, use_context=True)
+    job_queue = bot.job_queue
 
     bot.dispatcher.add_handler(CommandHandler("help", help_handler))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler))
@@ -330,37 +345,20 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
     bot.dispatcher.add_handler(CommandHandler("info", info_handler))
     bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
-    bot.dispatcher.add_handler(
-        CommandHandler(
-            "subscribe", partial(subscribe_handler, job_queue=job_queue), pass_args=True
-        )
-    )
-    bot.dispatcher.add_handler(
-        CommandHandler("unsubscribe", partial(unsubscribe_handler, job_queue=job_queue))
-    )
-    bot.dispatcher.add_handler(
-        CommandHandler("status", partial(status_handler, job_queue=job_queue))
-    )
+    bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler, pass_args=True))
+    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
+    bot.dispatcher.add_handler(CommandHandler("status", status_handler))
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
-    # config
-    for user_id in user_db.users():
-        if user_db.is_subscriber(user_id):
-            filter_text = user_db.menu_filter_of(user_id) or ""
-            logging.info(
-                "Subscribed {} for notification at {} with filter '{}'".format(
-                    user_id, NOTIFICATION_TIME, filter_text
-                )
-            )
-            job_queue.run_daily(
-                lambda updater, job: send_menu(
-                    updater.bot, job.name, Query.from_text(filter_text)
-                ),
-                NOTIFICATION_TIME,
-                days=(0, 1, 2, 3, 4),
-                name=str(user_id),
-            )
+    logging.debug(f"NOTIFICATION_TIME: {NOTIFICATION_TIME}")
+
+    job_queue.run_daily(
+        notify_subscribers,
+        NOTIFICATION_TIME,
+        days=(0, 1, 2, 3, 4),
+        name='notify_subscribers',
+    )
 
     job_queue.start()
     bot.start_polling()
