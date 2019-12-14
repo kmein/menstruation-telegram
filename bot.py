@@ -311,7 +311,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
         try:
             context.bot.send_message(user_id, emojized_text)
         except Unauthorized:
-            logging.exception(f"Skipped {user_id} and removed, because he blocked the bot")
+            logging.exception(f"Skipped and removed {user_id}, because he blocked the bot")
             user_db.remove_user(user_id)
             continue
     context.bot.send_message(
