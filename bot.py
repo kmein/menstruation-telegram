@@ -39,6 +39,11 @@ try:
 except KeyError:
     REDIS_HOST = "localhost"
 
+try:
+    MODERATORS = os.environ["MENSTRUATION_MODERATORS"]
+    MODERATORS = list(MODERATORS.split(","))
+except KeyError:
+    MODERATORS = []
 
 logging.basicConfig(
     level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
@@ -281,6 +286,41 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
+def broadcast_handler(update: Update, context: CallbackContext):
+    """"For moderators only"""
+    logging.debug(f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}")
+    if str(update.message.chat_id) not in MODERATORS:
+        logging.warning(f"{update.message.chat_id} tried to send an Broadcast, but is no Moderator")
+        context.bot.send_message(
+            update.message.chat_id,
+            f"Du hast nicht die Berechtigung einen Broadcast zu versenden. {emojize(error_emoji())}"
+        )
+        return None
+    text = demojize(" ".join(context.args))
+    if text in ["", None]:
+        context.bot.send_message(
+            update.message.chat_id,
+            f"Broadcast-Text darf nicht leer sein. {emojize(error_emoji())}"
+        )
+        return None
+    emojized_text = emojize(text)
+    for user_id in user_db.users():
+        if user_id == update.message.chat_id:
+            logging.debug(f"Skipped {user_id}, text: {text}")
+            continue
+        logging.debug(f"Send to {user_id}, text: {text}")
+        try:
+            context.bot.send_message(user_id, emojized_text)
+        except Unauthorized:
+            logging.exception(f"Skipped {user_id}, because he blocked the bot")
+            continue
+    context.bot.send_message(
+        update.message.chat_id,
+        "Broadcast erfolgreich versendet."
+    )
+    logging.debug(f"Leaving: broadcast_handler")
+
+
 def notify_subscribers(context: CallbackContext):
     logging.debug("Entering: notify_subscribers")
     for user_id in user_db.users():
@@ -348,6 +388,7 @@ if __name__ == "__main__":
     bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler, pass_args=True))
     bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
     bot.dispatcher.add_handler(CommandHandler("status", status_handler))
+    bot.dispatcher.add_handler(CommandHandler("broadcast", broadcast_handler, pass_args=True))
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
