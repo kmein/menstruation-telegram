@@ -297,7 +297,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
         )
         return None
     text = demojize(" ".join(context.args))
-    if text in ["", None]:
+    if not text:
         context.bot.send_message(
             update.message.chat_id,
             f"Broadcast-Text darf nicht leer sein. {emojize(error_emoji())}"
