@@ -40,8 +40,7 @@ except KeyError:
     REDIS_HOST = "localhost"
 
 try:
-    MODERATORS = os.environ["MENSTRUATION_MODERATORS"]
-    MODERATORS = list(MODERATORS.split(","))
+    MODERATORS = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
 except KeyError:
     MODERATORS = []
 
@@ -290,17 +289,17 @@ def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
     logging.debug(f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}")
     if str(update.message.chat_id) not in MODERATORS:
-        logging.warning(f"{update.message.chat_id} tried to send an Broadcast, but is no Moderator")
+        logging.warning(f"{update.message.chat_id} tried to send a broadcast message, but is no moderator")
         context.bot.send_message(
             update.message.chat_id,
-            f"Du hast nicht die Berechtigung einen Broadcast zu versenden. {emojize(error_emoji())}"
+            emojize(f"Du hast nicht die Berechtigung einen Broadcast zu versenden. {error_emoji()}")
         )
         return None
     text = demojize(" ".join(context.args))
     if not text:
         context.bot.send_message(
             update.message.chat_id,
-            f"Broadcast-Text darf nicht leer sein. {emojize(error_emoji())}"
+            emojize(f"Broadcast-Text darf nicht leer sein. {error_emoji()}")
         )
         return None
     emojized_text = emojize(text)
@@ -312,11 +311,12 @@ def broadcast_handler(update: Update, context: CallbackContext):
         try:
             context.bot.send_message(user_id, emojized_text)
         except Unauthorized:
-            logging.exception(f"Skipped {user_id}, because he blocked the bot")
+            logging.exception(f"Skipped {user_id} and removed, because he blocked the bot")
+            user_db.remove_user(user_id)
             continue
     context.bot.send_message(
         update.message.chat_id,
-        "Broadcast erfolgreich versendet."
+        emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
     logging.debug(f"Leaving: broadcast_handler")
 
