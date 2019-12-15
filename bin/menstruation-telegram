@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import logging
+from datetime import datetime, time
+
+from telegram.ext import (
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    CallbackContext,
+    Updater,
+)
+from telegram.ext.filters import Filters
+from menstruation.handlers import (
+    help_handler,
+    menu_handler,
+    mensa_handler,
+    allergens_handler,
+    info_handler,
+    resetallergens_handler,
+    subscribe_handler,
+    unsubscribe_handler,
+    status_handler,
+    broadcast_handler,
+    callback_handler,
+    notify_subscribers,
+)
+
+try:
+    TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
+except KeyError:
+    print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+    sys.exit(1)
+
+NOTIFICATION_TIME: time = datetime.strptime(
+    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+).time()
+logging.debug(f"NOTIFICATION_TIME: {NOTIFICATION_TIME}")
+
+
+bot = Updater(token=TOKEN, use_context=True)
+job_queue = bot.job_queue
+
+bot.dispatcher.add_handler(CommandHandler("help", help_handler))
+bot.dispatcher.add_handler(CommandHandler("start", help_handler))
+bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
+bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
+bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
+bot.dispatcher.add_handler(CommandHandler("info", info_handler))
+bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
+bot.dispatcher.add_handler(
+    CommandHandler("subscribe", subscribe_handler, pass_args=True)
+)
+bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
+bot.dispatcher.add_handler(CommandHandler("status", status_handler))
+bot.dispatcher.add_handler(
+    CommandHandler("broadcast", broadcast_handler, pass_args=True)
+)
+bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
+bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
+
+
+job_queue.run_daily(
+    notify_subscribers,
+    NOTIFICATION_TIME,
+    days=(0, 1, 2, 3, 4),
+    name="notify_subscribers",
+)
+
+job_queue.start()
+bot.start_polling()
+bot.idle()

@@ -10,22 +10,12 @@ from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import Unauthorized
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    CallbackContext,
-)
-from telegram.ext import Updater
-from telegram.ext.filters import Filters
+from telegram.ext import CallbackContext
 
-import client
-from config import MenstruationConfig
-from query import Query
+import menstruation.client as client
+from menstruation.config import MenstruationConfig
+from menstruation.query import Query
 
-NOTIFICATION_TIME: time = datetime.strptime(
-    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
-).time()
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -93,7 +83,9 @@ def help_handler(update: Update, context: CallbackContext):
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
     mensa_code = user_db.mensa_of(chat_id)
-    logging.debug(f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}")
+    logging.debug(
+        f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}"
+    )
     if mensa_code is None:
         raise TypeError("No mensa selected")
     json_object = client.get_json(ENDPOINT, mensa_code, query)
@@ -174,7 +166,9 @@ def allergens_handler(update: Update, context: CallbackContext):
 
 
 def resetallergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}")
+    logging.debug(
+        f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}"
+    )
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
@@ -256,9 +250,13 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 def unsubscribe_handler(update: Update, context: CallbackContext):
     logging.debug(
-        ", ".join(["Entering: status_handler", f"chat_id: {update.message.chat_id}",
-                   f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
-                   ])
+        ", ".join(
+            [
+                "Entering: status_handler",
+                f"chat_id: {update.message.chat_id}",
+                f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
+            ]
+        )
     )
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
@@ -274,9 +272,14 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 def status_handler(update: Update, context: CallbackContext):
     logging.debug(
-        ", ".join(["Entering: status_handler",f", chat_id: {update.message.chat_id}",
-                   f", user_db.users(): {user_db.users()}",
-                   f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}"])
+        ", ".join(
+            [
+                "Entering: status_handler",
+                f", chat_id: {update.message.chat_id}",
+                f", user_db.users(): {user_db.users()}",
+                f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}",
+            ]
+        )
     )
     context.bot.send_message(
         update.message.chat_id,
@@ -287,19 +290,25 @@ def status_handler(update: Update, context: CallbackContext):
 
 def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
-    logging.debug(f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}")
+    logging.debug(
+        f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}"
+    )
     if str(update.message.chat_id) not in MODERATORS:
-        logging.warning(f"{update.message.chat_id} tried to send a broadcast message, but is no moderator")
+        logging.warning(
+            f"{update.message.chat_id} tried to send a broadcast message, but is no moderator"
+        )
         context.bot.send_message(
             update.message.chat_id,
-            emojize(f"Du hast nicht die Berechtigung einen Broadcast zu versenden. {error_emoji()}")
+            emojize(
+                f"Du hast nicht die Berechtigung einen Broadcast zu versenden. {error_emoji()}"
+            ),
         )
         return None
     text = demojize(" ".join(context.args))
     if not text:
         context.bot.send_message(
             update.message.chat_id,
-            emojize(f"Broadcast-Text darf nicht leer sein. {error_emoji()}")
+            emojize(f"Broadcast-Text darf nicht leer sein. {error_emoji()}"),
         )
         return None
     emojized_text = emojize(text)
@@ -311,12 +320,13 @@ def broadcast_handler(update: Update, context: CallbackContext):
         try:
             context.bot.send_message(user_id, emojized_text)
         except Unauthorized:
-            logging.exception(f"Skipped and removed {user_id}, because he blocked the bot")
+            logging.exception(
+                f"Skipped and removed {user_id}, because he blocked the bot"
+            )
             user_db.remove_user(user_id)
             continue
     context.bot.send_message(
-        update.message.chat_id,
-        emojize("Broadcast erfolgreich versendet. :thumbs_up:")
+        update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
     logging.debug(f"Leaving: broadcast_handler")
 
@@ -330,7 +340,9 @@ def notify_subscribers(context: CallbackContext):
             try:
                 send_menu(context.bot, user_id, Query.from_text(filter_text))
             except Unauthorized:
-                logging.exception(f"{user_id} has blocked the bot. Removed Subscription.")
+                logging.exception(
+                    f"{user_id} has blocked the bot. Removed Subscription."
+                )
                 user_db.set_subscription(user_id, False)
                 continue
             sleep(1.0)
@@ -365,42 +377,3 @@ def error_emoji() -> str:
             ":tired_face:",
         ]
     )
-
-
-if __name__ == "__main__":
-    if "MENSTRUATION_TOKEN" not in os.environ:
-        print(
-            "Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr
-        )
-        sys.exit(1)
-    TOKEN = os.environ["MENSTRUATION_TOKEN"].strip()
-
-    bot = Updater(token=TOKEN, use_context=True)
-    job_queue = bot.job_queue
-
-    bot.dispatcher.add_handler(CommandHandler("help", help_handler))
-    bot.dispatcher.add_handler(CommandHandler("start", help_handler))
-    bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
-    bot.dispatcher.add_handler(CommandHandler("info", info_handler))
-    bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
-    bot.dispatcher.add_handler(CommandHandler("subscribe", subscribe_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
-    bot.dispatcher.add_handler(CommandHandler("status", status_handler))
-    bot.dispatcher.add_handler(CommandHandler("broadcast", broadcast_handler, pass_args=True))
-    bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
-    bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
-
-    logging.debug(f"NOTIFICATION_TIME: {NOTIFICATION_TIME}")
-
-    job_queue.run_daily(
-        notify_subscribers,
-        NOTIFICATION_TIME,
-        days=(0, 1, 2, 3, 4),
-        name='notify_subscribers',
-    )
-
-    job_queue.start()
-    bot.start_polling()
-    bot.idle()

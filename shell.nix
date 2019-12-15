@@ -1,24 +1,23 @@
 with import <nixpkgs> {};
 let secret = import ./secret.nix;
-in stdenv.mkDerivation {
+in stdenv.mkDerivation rec {
   name = "menstruation";
 
   buildInputs = [
-    python36Packages.pip
-    python36Full
-    python36Packages.virtualenv
+    python36Packages.virtualenvwrapper
     libffi
     openssl
     (pkgs.writeShellScriptBin "telegram-test" ''
-      ${pkgs.redis}/bin/redis-server >/dev/null &
-      MENSTRUATION_DEBUG=1 MENSTRUATION_ENDPOINT=${secret.endpoint} MENSTRUATION_TOKEN=${secret.token} python3 bot.py
+      MENSTRUATION_DEBUG=1 MENSTRUATION_ENDPOINT=${secret.endpoint} MENSTRUATION_TOKEN=${secret.token} python3 menstruation/bot.py
     '')
   ];
 
   shellHook = ''
     SOURCE_DATE_EPOCH=$(date +%s)
-    virtualenv --no-setuptools venv
-    export PATH=$PWD/venv/bin:$PATH
+    virtualenv venv
+    source venv/bin/activate
     pip install -r requirements.txt
+
+    ${pkgs.redis}/bin/redis-server >/dev/null &
   '';
 }

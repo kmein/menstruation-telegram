@@ -1,6 +1,6 @@
 FROM python:3.7-alpine3.10
 
-ADD *.py requirements.txt /app/
+ADD . /app/
 
 ENV TZ=Europe/Berlin \
     MENSTRUATION_TOKEN='TOKEN' \
@@ -15,8 +15,7 @@ RUN set -ex \
                                     build-base \
                                     python3-dev \
                                     libffi-dev \
-    && pip install -r requirements.txt \
-    && rm requirements.txt \
+    && pip install . \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone \
     && apk del .build-deps
@@ -25,4 +24,4 @@ LABEL author="Kierán Meinhardt <kieran.meinhardt@gmail.com>" \
       maintainer="QttyLog <qttylog@gmail.com>" \
       github="https://github.com/kmein/menstruation-telegram"
 
-CMD [ "/usr/local/bin/python", "bot.py" ]
+CMD [ "menstruation-telegram" ]

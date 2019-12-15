@@ -1,7 +1,8 @@
 import logging
 import requests
 from typing import Dict
-from query import Color, Tag, Query
+
+from menstruation.query import Color, Tag, Query
 
 
 def render_cents(total_cents):

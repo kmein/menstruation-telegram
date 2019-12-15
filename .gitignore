@@ -1,3 +1,5 @@
 .idea/
 venv/
 secret.nix
+dump.rdb
+__pycache__
