@@ -2,8 +2,6 @@
 import logging
 import os
 import random
-import sys
-from datetime import datetime, time
 from time import sleep
 
 from emoji import emojize, demojize
@@ -15,7 +13,6 @@ from telegram.ext import CallbackContext
 import menstruation.client as client
 from menstruation.config import MenstruationConfig
 from menstruation.query import Query
-
 
 try:
     ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
@@ -233,12 +230,11 @@ def subscribe_handler(update: Update, context: CallbackContext):
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
         logging.info(
-            "Subscribed {} for notification at {} with filter '{}'".format(
+            "Subscribed {} for notification with filter '{}'".format(
                 update.message.chat_id, filter_text
             )
         )
         if is_refreshed:
-            section = str(update.message.chat_id)
             logging.info("Subscription updated {}".format(update.message.chat_id))
         context.bot.send_message(
             update.message.chat_id,
