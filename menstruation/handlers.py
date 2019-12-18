@@ -234,7 +234,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
         user_db.set_menu_filter(update.message.chat_id, filter_text)
         logging.info(
             "Subscribed {} for notification at {} with filter '{}'".format(
-                update.message.chat_id, NOTIFICATION_TIME, filter_text
+                update.message.chat_id, filter_text
             )
         )
         if is_refreshed:
@@ -344,6 +344,9 @@ def notify_subscribers(context: CallbackContext):
                     f"{user_id} has blocked the bot. Removed Subscription."
                 )
                 user_db.set_subscription(user_id, False)
+                continue
+            except Exception as err:
+                logging.exception(f"Exception: {err}, skip user: {user_id}")
                 continue
             sleep(1.0)
     logging.debug("Leaving: notify_subscribers")

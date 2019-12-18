@@ -1,4 +1,7 @@
 import logging
+from json import JSONDecodeError
+from time import sleep
+
 import requests
 from typing import Dict
 
@@ -33,11 +36,17 @@ def render_group(group):
 
 
 def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
-    response = requests.get(
-        f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
-    )
-    logging.info("Requesting {}".format(response.url))
-    return response.json()
+    for retries in range(5):
+        response = requests.get(
+            f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
+        )
+        logging.info("Requesting {}".format(response.url))
+        try:
+            return response.json()
+        except JSONDecodeError:
+            logging.exception(f"JSONDecodeError: Try number {retries + 1} trying again, response: {response}")
+            sleep(0.5)
+    raise Exception("No proper Response")
 
 
 def get_allergens(endpoint: str) -> Dict[str, str]:
