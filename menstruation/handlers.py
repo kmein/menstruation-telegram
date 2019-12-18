@@ -234,7 +234,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
         user_db.set_menu_filter(update.message.chat_id, filter_text)
         logging.info(
             "Subscribed {} for notification at {} with filter '{}'".format(
-                update.message.chat_id, NOTIFICATION_TIME, filter_text
+                update.message.chat_id, filter_text
             )
         )
         if is_refreshed:
