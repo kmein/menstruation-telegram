@@ -345,6 +345,9 @@ def notify_subscribers(context: CallbackContext):
                 )
                 user_db.set_subscription(user_id, False)
                 continue
+            except Exception as err:
+                logging.exception(f"Exception: {err}, skip user: {user_id}")
+                continue
             sleep(1.0)
     logging.debug("Leaving: notify_subscribers")
 
