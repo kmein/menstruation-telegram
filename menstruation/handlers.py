@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import functools
 import logging
 import os
 import random
@@ -38,8 +39,18 @@ logging.basicConfig(
 user_db = MenstruationConfig(REDIS_HOST)
 
 
+def debug_handler(func):
+    @functools.wraps(func)
+    def wrapper_decorator(*args, **kwargs):
+        logging.debug(f"Entering: {func.__name__}, chat_id: {args[0].message.chat_id}")
+        value = func(*args, **kwargs)
+        logging.debug(f"Exiting: {func.__name__}")
+        return value
+    return wrapper_decorator
+
+
+@debug_handler
 def help_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: help_handler, chat_id: {update.message.chat_id}")
 
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -93,10 +104,11 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
         bot.send_message(
             chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
         )
+    logging.debug(f"Exiting: send_menu")
 
 
+@debug_handler
 def menu_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: menu_handler, chat_id: {update.message.chat_id}")
     text = demojize("".join(context.args))
     try:
         send_menu(context.bot, update.message.chat_id, Query.from_text(text))
@@ -122,8 +134,8 @@ def menu_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_handler
 def info_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: info_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     code_name = client.get_mensas(ENDPOINT)
     myallergens = user_db.allergens_of(update.message.chat_id)
@@ -146,8 +158,8 @@ def info_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_handler
 def allergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: allergens_handler, chat_id: {update.message.chat_id}")
     number_name = client.get_allergens(ENDPOINT)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -162,18 +174,16 @@ def allergens_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_handler
 def resetallergens_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}"
-    )
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
     )
 
 
+@debug_handler
 def mensa_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: mensa_handler, chat_id: {update.message.chat_id}")
     text = " ".join(context.args)
     pattern = text.strip()
     code_name = client.get_mensas(ENDPOINT, pattern)
@@ -215,8 +225,8 @@ def callback_handler(update: Update, context: CallbackContext):
             logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
 
 
+@debug_handler
 def subscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: subscribe_handler, chat_id: {update.message.chat_id}")
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
         filter_text,
@@ -244,19 +254,12 @@ def subscribe_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_handler
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        ", ".join(
-            [
-                "Entering: status_handler",
-                f"chat_id: {update.message.chat_id}",
-                f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
-            ]
-        )
-    )
+    logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
-        logging.info("Unsubscribed {}".format(update.message.chat_id))
+        logging.info(f"Unsubscribed {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
         )
@@ -266,17 +269,8 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_handler
 def status_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        ", ".join(
-            [
-                "Entering: status_handler",
-                f", chat_id: {update.message.chat_id}",
-                f", user_db.users(): {user_db.users()}",
-                f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}",
-            ]
-        )
-    )
     context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
@@ -284,11 +278,10 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_handler
 def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
-    logging.debug(
-        f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}"
-    )
+    logging.debug(f"MODERATORS: {MODERATORS}")
     if str(update.message.chat_id) not in MODERATORS:
         logging.warning(
             f"{update.message.chat_id} tried to send a broadcast message, but is no moderator"
@@ -324,7 +317,6 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
-    logging.debug(f"Leaving: broadcast_handler")
 
 
 def notify_subscribers(context: CallbackContext):
@@ -345,7 +337,7 @@ def notify_subscribers(context: CallbackContext):
                 logging.exception(f"Exception: {err}, skip user: {user_id}")
                 continue
             sleep(1.0)
-    logging.debug("Leaving: notify_subscribers")
+    logging.debug("Exiting: notify_subscribers")
 
 
 def error_emoji() -> str:
