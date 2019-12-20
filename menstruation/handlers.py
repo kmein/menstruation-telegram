@@ -43,9 +43,8 @@ def debug_handler(func):
     @functools.wraps(func)
     def wrapper_decorator(*args, **kwargs):
         logging.debug(f"Entering: {func.__name__}, chat_id: {args[0].message.chat_id}")
-        value = func(*args, **kwargs)
+        func(*args, **kwargs)
         logging.debug(f"Exiting: {func.__name__}")
-        return value
     return wrapper_decorator
 
 
