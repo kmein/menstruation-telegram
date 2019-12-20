@@ -41,9 +41,13 @@ user_db = MenstruationConfig(REDIS_HOST)
 
 def debug_handler(func):
     @functools.wraps(func)
-    def wrapper_decorator(*args, **kwargs):
-        logging.debug(f"Entering: {func.__name__}, chat_id: {args[0].message.chat_id}")
-        func(*args, **kwargs)
+    def wrapper_decorator(*args):
+        logging.debug(
+            f"Entering: {func.__name__}, "
+            f"chat_id: {args[0].message.chat_id}, "
+            f"args: {args[1].args}"
+        )
+        func(*args)
         logging.debug(f"Exiting: {func.__name__}")
     return wrapper_decorator
 
