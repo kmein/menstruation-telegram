@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import functools
 import logging
-import os
 import random
 from json import JSONDecodeError
 from time import sleep
@@ -16,28 +15,8 @@ import menstruation.client as client
 from menstruation.config import MenstruationConfig
 from menstruation.query import Query
 
-try:
-    ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
-    if not ENDPOINT:
-        raise KeyError
-except KeyError:
-    ENDPOINT = "http://127.0.0.1:80"
-
-try:
-    REDIS_HOST = os.environ["MENSTRUATION_REDIS"]
-except KeyError:
-    REDIS_HOST = "localhost"
-
-try:
-    MODERATORS = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
-except KeyError:
-    MODERATORS = []
-
-logging.basicConfig(
-    level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
-)
-
-user_db = MenstruationConfig(REDIS_HOST)
+conf = MenstruationConfig()
+user_db = conf.user_db
 
 
 def debug_handler(func):
@@ -100,7 +79,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     )
     if mensa_code is None:
         raise TypeError("No mensa selected")
-    json_object = client.get_json(ENDPOINT, mensa_code, query)
+    json_object = client.get_json(conf.endpoint, mensa_code, query)
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
@@ -140,8 +119,8 @@ def menu_handler(update: Update, context: CallbackContext):
 
 @debug_handler
 def info_handler(update: Update, context: CallbackContext):
-    number_name = client.get_allergens(ENDPOINT)
-    code_name = client.get_mensas(ENDPOINT)
+    number_name = client.get_allergens(conf.endpoint)
+    code_name = client.get_mensas(conf.endpoint)
     myallergens = user_db.allergens_of(update.message.chat_id)
     mymensa = user_db.mensa_of(update.message.chat_id)
     subscribed = user_db.is_subscriber(update.message.chat_id)
@@ -164,7 +143,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 @debug_handler
 def allergens_handler(update: Update, context: CallbackContext):
-    number_name = client.get_allergens(ENDPOINT)
+    number_name = client.get_allergens(conf.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=f"A{number}")]
@@ -190,7 +169,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
-    code_name = client.get_mensas(ENDPOINT, pattern)
+    code_name = client.get_mensas(conf.endpoint, pattern)
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
@@ -209,7 +188,7 @@ def callback_handler(update: Update, context: CallbackContext):
     if query:
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
-            name = client.get_allergens(ENDPOINT)[allergen_number]
+            name = client.get_allergens(conf.endpoint)[allergen_number]
             context.bot.answer_callback_query(
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
@@ -220,7 +199,7 @@ def callback_handler(update: Update, context: CallbackContext):
                 "Set {}.allergens to {}".format(query.message.chat_id, allergens)
             )
         else:
-            name = client.get_mensas(ENDPOINT)[int(query.data)]
+            name = client.get_mensas(conf.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
                 query.id,
                 text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
@@ -285,8 +264,8 @@ def status_handler(update: Update, context: CallbackContext):
 @debug_handler
 def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
-    logging.debug(f"MODERATORS: {MODERATORS}")
-    if str(update.message.chat_id) not in MODERATORS:
+    logging.debug(f"MODERATORS: {conf.moderators}")
+    if str(update.message.chat_id) not in conf.moderators:
         logging.warning(
             f"{update.message.chat_id} tried to send a broadcast message, but is no moderator"
         )

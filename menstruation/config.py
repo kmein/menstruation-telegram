@@ -1,8 +1,78 @@
+import logging
+import os
 from typing import Set, Optional, List
 import redis
 
 
-class MenstruationConfig:
+class MenstruationConfig(object):
+
+    def __init__(self) -> None:
+        args = self.get_environment_args()
+        self.__endpoint = args['ENDPOINT']
+        self.__redis_host = args['REDIS_HOST']
+        self.__moderators = args['MODERATORS']
+        self.__debug = args['DEBUG']
+        self.user_db = UserDatabase(self.redis_host)
+        self.set_logging_level()
+
+    def get_endpoint(self) -> str:
+        return self.__endpoint
+
+    def get_redis_host(self) -> str:
+        return self.__redis_host
+
+    def get_moderators(self) -> list:
+        return self.__moderators
+
+    def set_moderators(self, moderators: List) -> None:
+        self.__moderators = moderators
+
+    def get_debug(self) -> bool:
+        return self.__debug
+
+    def set_debug(self, debug: bool) -> None:
+        self.__debug = debug
+        self.set_logging_level()
+
+    endpoint = property(get_endpoint)
+    redis_host = property(get_redis_host)
+    moderators = property(get_moderators, set_moderators)
+    debug = property(get_debug, set_debug)
+
+    def set_logging_level(self):
+        logging.basicConfig(
+            level=logging.DEBUG if self.__debug else logging.INFO
+        )
+
+    @staticmethod
+    def get_environment_args() -> dict:
+
+        args = dict()
+
+        try:
+            args['ENDPOINT'] = os.environ["MENSTRUATION_ENDPOINT"]
+            if not args['ENDPOINT']:
+                raise KeyError
+        except KeyError:
+            args['ENDPOINT'] = "http://127.0.0.1:80"
+
+        try:
+            args['REDIS_HOST'] = os.environ["MENSTRUATION_REDIS"]
+        except KeyError:
+            args['REDIS_HOST'] = "localhost"
+
+        try:
+            args['MODERATORS'] = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
+        except KeyError:
+            args['MODERATORS'] = []
+
+        args['DEBUG'] = True if "MENSTRUATION_DEBUG" in os.environ else False
+
+        return args
+
+
+class UserDatabase(object):
+
     def __init__(self, host: str) -> None:
         self.redis = redis.Redis(host, decode_responses=True)
 
