@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+from datetime import time, datetime
 from typing import Set, Optional, List
 import redis
 
@@ -8,12 +10,17 @@ class MenstruationConfig(object):
 
     def __init__(self) -> None:
         args = self.get_environment_args()
+        self.__token: str = args['TOKEN']
         self.__endpoint: str = args['ENDPOINT']
         self.__redis_host: str = args['REDIS_HOST']
         self.__moderators: list = args['MODERATORS']
+        self.__notification_time: time = args['NOTIFICATION_TIME']
         self.__debug: bool = args['DEBUG']
         self.user_db = UserDatabase(self.redis_host)
         self.set_logging_level()
+
+    def get_token(self) -> str:
+        return self.__token
 
     def get_endpoint(self) -> str:
         return self.__endpoint
@@ -30,6 +37,12 @@ class MenstruationConfig(object):
     def add_moderator(self, moderator: str) -> None:
         self.__moderators.append(moderator)
 
+    def get_notification_time(self) -> time:
+        return self.__notification_time
+
+    def set_notification_time(self, new_time: time) -> None:
+        self.__notification_time = new_time
+
     def get_debug(self) -> bool:
         return self.__debug
 
@@ -37,9 +50,11 @@ class MenstruationConfig(object):
         self.__debug = debug
         self.set_logging_level()
 
+    token = property(get_token)
     endpoint = property(get_endpoint)
     redis_host = property(get_redis_host)
     moderators = property(get_moderators, set_moderators)
+    notification_time = property(get_notification_time, set_notification_time)
     debug = property(get_debug, set_debug)
 
     def set_logging_level(self):
@@ -53,6 +68,12 @@ class MenstruationConfig(object):
         args = dict()
 
         try:
+            args['TOKEN'] = os.environ["MENSTRUATION_TOKEN"].strip()
+        except KeyError:
+            print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+            sys.exit(1)
+
+        try:
             args['ENDPOINT'] = os.environ["MENSTRUATION_ENDPOINT"]
             if not args['ENDPOINT']:
                 raise KeyError
@@ -63,6 +84,10 @@ class MenstruationConfig(object):
             args['REDIS_HOST'] = os.environ["MENSTRUATION_REDIS"]
         except KeyError:
             args['REDIS_HOST'] = "localhost"
+
+        args['NOTIFICATION_TIME']: time = datetime.strptime(
+            os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+        ).time()
 
         try:
             args['MODERATORS'] = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
