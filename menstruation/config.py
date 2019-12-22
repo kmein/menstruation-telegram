@@ -8,10 +8,10 @@ class MenstruationConfig(object):
 
     def __init__(self) -> None:
         args = self.get_environment_args()
-        self.__endpoint = args['ENDPOINT']
-        self.__redis_host = args['REDIS_HOST']
-        self.__moderators = args['MODERATORS']
-        self.__debug = args['DEBUG']
+        self.__endpoint: str = args['ENDPOINT']
+        self.__redis_host: str = args['REDIS_HOST']
+        self.__moderators: list = args['MODERATORS']
+        self.__debug: bool = args['DEBUG']
         self.user_db = UserDatabase(self.redis_host)
         self.set_logging_level()
 
@@ -26,6 +26,9 @@ class MenstruationConfig(object):
 
     def set_moderators(self, moderators: List) -> None:
         self.__moderators = moderators
+
+    def add_moderator(self, moderator: str) -> None:
+        self.__moderators.append(moderator)
 
     def get_debug(self) -> bool:
         return self.__debug
