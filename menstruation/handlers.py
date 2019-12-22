@@ -3,6 +3,7 @@ import functools
 import logging
 import os
 import random
+from json import JSONDecodeError
 from time import sleep
 
 from emoji import emojize, demojize
@@ -328,17 +329,20 @@ def notify_subscribers(context: CallbackContext):
         if user_db.is_subscriber(user_id):
             logging.debug(f"Notify: {user_id}")
             filter_text = user_db.menu_filter_of(user_id) or ""
-            try:
-                send_menu(context.bot, user_id, Query.from_text(filter_text))
-            except Unauthorized:
-                logging.exception(
-                    f"{user_id} has blocked the bot. Removed Subscription."
-                )
-                user_db.set_subscription(user_id, False)
-                continue
-            except Exception as err:
-                logging.exception(f"Exception: {err}, skip user: {user_id}")
-                continue
+            for retries in range(5):
+                try:
+                    send_menu(context.bot, user_id, Query.from_text(filter_text))
+                except JSONDecodeError:
+                    logging.exception(f"JSONDecodeError: Try number {retries + 1} trying again, response")
+                    continue
+                except Unauthorized:
+                    logging.exception(
+                        f"{user_id} has blocked the bot. Removed Subscription."
+                    )
+                    user_db.set_subscription(user_id, False)
+                except Exception as err:
+                    logging.exception(f"Exception: {err}, skip user: {user_id}")
+                break
             sleep(1.0)
     logging.debug("Exiting: notify_subscribers")
 
