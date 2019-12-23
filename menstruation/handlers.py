@@ -17,7 +17,6 @@ from menstruation.query import Query
 
 user_db = config.user_db
 
-
 def debug_logging(func):
     @functools.wraps(func)
     def wrapper_decorator(*args, **kwargs):
