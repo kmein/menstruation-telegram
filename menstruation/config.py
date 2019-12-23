@@ -144,3 +144,6 @@ class UserDatabase(object):
 
     def remove_user(self, user_id: int) -> int:
         return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
+
+
+menstruation_config = MenstruationConfig()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from menstruation.config import MenstruationConfig
+from menstruation import config
 
 from telegram.ext import (
     CommandHandler,
@@ -24,7 +24,7 @@ from menstruation.handlers import (
     notify_subscribers,
 )
 
-conf = MenstruationConfig()
+conf = config.menstruation_config
 
 bot = Updater(token=conf.token, use_context=True)
 job_queue = bot.job_queue

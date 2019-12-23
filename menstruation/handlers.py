@@ -12,10 +12,10 @@ from telegram.error import Unauthorized
 from telegram.ext import CallbackContext
 
 import menstruation.client as client
-from menstruation.config import MenstruationConfig
+from menstruation import config
 from menstruation.query import Query
 
-conf = MenstruationConfig()
+conf = config.menstruation_config
 user_db = conf.user_db
 
 
