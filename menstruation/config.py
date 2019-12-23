@@ -6,42 +6,6 @@ from typing import Set, Optional, List
 import redis
 
 
-def get_environment_args() -> dict:
-
-    arguments = dict()
-
-    try:
-        arguments['TOKEN'] = os.environ["MENSTRUATION_TOKEN"].strip()
-    except KeyError:
-        print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        arguments['ENDPOINT'] = os.environ["MENSTRUATION_ENDPOINT"]
-        if not arguments['ENDPOINT']:
-            raise KeyError
-    except KeyError:
-        arguments['ENDPOINT'] = "http://127.0.0.1:80"
-
-    try:
-        arguments['REDIS_HOST'] = os.environ["MENSTRUATION_REDIS"]
-    except KeyError:
-        arguments['REDIS_HOST'] = "localhost"
-
-    arguments['NOTIFICATION_TIME']: time = datetime.strptime(
-        os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
-    ).time()
-
-    try:
-        arguments['MODERATORS'] = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
-    except KeyError:
-        arguments['MODERATORS'] = []
-
-    arguments['DEBUG'] = "MENSTRUATION_DEBUG" in os.environ
-
-    return arguments
-
-
 def set_logging_level(logging_level: logging):
     logging.basicConfig(
         level=logging_level
@@ -95,14 +59,35 @@ class UserDatabase(object):
         return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
 
 
-args = get_environment_args()
+try:
+    token = os.environ["MENSTRUATION_TOKEN"].strip()
+except KeyError:
+    print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+    sys.exit(1)
 
-token: str = args['TOKEN']
-endpoint: str = args['ENDPOINT']
-redis_host: str = args['REDIS_HOST']
-moderators: list = args['MODERATORS']
-notification_time: time = args['NOTIFICATION_TIME']
-debug: bool = args['DEBUG']
+try:
+    endpoint = os.environ["MENSTRUATION_ENDPOINT"]
+    if not endpoint:
+        raise KeyError
+except KeyError:
+    endpoint = "http://127.0.0.1:80"
+
+try:
+    redis_host = os.environ["MENSTRUATION_REDIS"]
+except KeyError:
+    redis_host = "localhost"
+
+notification_time: time = datetime.strptime(
+    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+).time()
+
+try:
+    moderators = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
+except KeyError:
+    moderators = []
+
+debug = "MENSTRUATION_DEBUG" in os.environ
+
 user_db = UserDatabase(redis_host)
 
 set_logging_level(logging.DEBUG if debug else logging.INFO)
