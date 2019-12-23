@@ -80,7 +80,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
     mensa_code = user_db.mensa_of(chat_id)
     logging.debug(
-        f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}"
+        f"allergens: {query.allergens}, mensa_code: {mensa_code}"
     )
     if mensa_code is None:
         raise TypeError("No mensa selected")
@@ -92,8 +92,6 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
         bot.send_message(
             chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
         )
-    logging.debug(f"Exiting: send_menu")
-
 
 @debug_logging
 def menu_handler(update: Update, context: CallbackContext):
@@ -269,7 +267,6 @@ def status_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 def broadcast_handler(update: Update, context: CallbackContext):
-    """"For moderators only"""
     logging.debug(f"MODERATORS: {config.moderators}")
     if str(update.message.chat_id) not in config.moderators:
         logging.warning(
@@ -310,7 +307,6 @@ def broadcast_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 def notify_subscribers(context: CallbackContext):
-    logging.debug("Entering: notify_subscribers")
     for user_id in user_db.users():
         if user_db.is_subscriber(user_id):
             logging.debug(f"Notify: {user_id}")
@@ -330,7 +326,6 @@ def notify_subscribers(context: CallbackContext):
                     logging.exception(f"Exception: {err}, skip user: {user_id}")
                 break
             sleep(1.0)
-    logging.debug("Exiting: notify_subscribers")
 
 
 def error_emoji() -> str:
