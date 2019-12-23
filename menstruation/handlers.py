@@ -18,20 +18,25 @@ from menstruation.query import Query
 user_db = config.user_db
 
 
-def debug_handler(func):
+def debug_logging(func):
     @functools.wraps(func)
-    def wrapper_decorator(*args):
-        logging.debug(
-            f"Entering: {func.__name__}, "
-            f"chat_id: {args[0].message.chat_id}, "
-            f"args: {args[1].args}"
-        )
-        func(*args)
+    def wrapper_decorator(*args, **kwargs):
+        try:
+            logging.debug(
+                f"Entering: {func.__name__}, "
+                f"chat_id: {args[0].message.chat_id}, "
+                f"args: {args[1].args}"
+            )
+        except AttributeError:
+            logging.debug(
+                f"Entering: {func.__name__}"
+            )
+        func(*args, **kwargs)
         logging.debug(f"Exiting: {func.__name__}")
     return wrapper_decorator
 
 
-@debug_handler
+@debug_logging
 def help_handler(update: Update, context: CallbackContext):
 
     def infos(mapping):
@@ -70,6 +75,7 @@ def help_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
     mensa_code = user_db.mensa_of(chat_id)
@@ -89,7 +95,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     logging.debug(f"Exiting: send_menu")
 
 
-@debug_handler
+@debug_logging
 def menu_handler(update: Update, context: CallbackContext):
     text = demojize("".join(context.args))
     try:
@@ -116,7 +122,7 @@ def menu_handler(update: Update, context: CallbackContext):
         )
 
 
-@debug_handler
+@debug_logging
 def info_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     code_name = client.get_mensas(config.endpoint)
@@ -140,7 +146,7 @@ def info_handler(update: Update, context: CallbackContext):
     )
 
 
-@debug_handler
+@debug_logging
 def allergens_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
@@ -156,7 +162,7 @@ def allergens_handler(update: Update, context: CallbackContext):
     )
 
 
-@debug_handler
+@debug_logging
 def resetallergens_handler(update: Update, context: CallbackContext):
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
@@ -164,7 +170,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
     )
 
 
-@debug_handler
+@debug_logging
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
@@ -182,6 +188,7 @@ def mensa_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
@@ -207,7 +214,7 @@ def callback_handler(update: Update, context: CallbackContext):
             logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
 
 
-@debug_handler
+@debug_logging
 def subscribe_handler(update: Update, context: CallbackContext):
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
@@ -236,7 +243,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
         )
 
 
-@debug_handler
+@debug_logging
 def unsubscribe_handler(update: Update, context: CallbackContext):
     logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
@@ -251,7 +258,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
         )
 
 
-@debug_handler
+@debug_logging
 def status_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id,
@@ -260,7 +267,7 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
-@debug_handler
+@debug_logging
 def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
     logging.debug(f"MODERATORS: {config.moderators}")
@@ -301,6 +308,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def notify_subscribers(context: CallbackContext):
     logging.debug("Entering: notify_subscribers")
     for user_id in user_db.users():
