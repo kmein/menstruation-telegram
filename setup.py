@@ -8,5 +8,8 @@ setup(
     author_email="kieran.meinhardt@gmail.com",
     packages=["menstruation"],
     scripts=["bin/menstruation-telegram"],
-    install_requires=["requests", "emoji", "python-telegram-bot", "redis"],
+    install_requires=["requests==2.22.0",
+                      "emoji==0.5.3",
+                      "python-telegram-bot==12.2",
+                      "redis==3.3.8"],
 )

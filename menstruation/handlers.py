@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import functools
 import logging
-import os
 import random
+from json import JSONDecodeError
 from time import sleep
 
 from emoji import emojize, demojize
@@ -11,35 +12,31 @@ from telegram.error import Unauthorized
 from telegram.ext import CallbackContext
 
 import menstruation.client as client
-from menstruation.config import MenstruationConfig
+from menstruation import config
 from menstruation.query import Query
 
-try:
-    ENDPOINT = os.environ["MENSTRUATION_ENDPOINT"]
-    if not ENDPOINT:
-        raise KeyError
-except KeyError:
-    ENDPOINT = "http://127.0.0.1:80"
+user_db = config.user_db
 
-try:
-    REDIS_HOST = os.environ["MENSTRUATION_REDIS"]
-except KeyError:
-    REDIS_HOST = "localhost"
-
-try:
-    MODERATORS = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
-except KeyError:
-    MODERATORS = []
-
-logging.basicConfig(
-    level=logging.DEBUG if "MENSTRUATION_DEBUG" in os.environ else logging.INFO
-)
-
-user_db = MenstruationConfig(REDIS_HOST)
+def debug_logging(func):
+    @functools.wraps(func)
+    def wrapper_decorator(*args, **kwargs):
+        try:
+            logging.debug(
+                f"Entering: {func.__name__}, "
+                f"chat_id: {args[0].message.chat_id}, "
+                f"args: {args[1].args}"
+            )
+        except AttributeError:
+            logging.debug(
+                f"Entering: {func.__name__}"
+            )
+        func(*args, **kwargs)
+        logging.debug(f"Exiting: {func.__name__}")
+    return wrapper_decorator
 
 
+@debug_logging
 def help_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: help_handler, chat_id: {update.message.chat_id}")
 
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -77,15 +74,16 @@ def help_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
     mensa_code = user_db.mensa_of(chat_id)
     logging.debug(
-        f"Entering: send_menu, chat_id: {chat_id}, allergens: {query.allergens}, mensa_code: {mensa_code}"
+        f"allergens: {query.allergens}, mensa_code: {mensa_code}"
     )
     if mensa_code is None:
         raise TypeError("No mensa selected")
-    json_object = client.get_json(ENDPOINT, mensa_code, query)
+    json_object = client.get_json(config.endpoint, mensa_code, query)
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
@@ -94,9 +92,8 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
             chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
         )
 
-
+@debug_logging
 def menu_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: menu_handler, chat_id: {update.message.chat_id}")
     text = demojize("".join(context.args))
     try:
         send_menu(context.bot, update.message.chat_id, Query.from_text(text))
@@ -122,10 +119,10 @@ def menu_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_logging
 def info_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: info_handler, chat_id: {update.message.chat_id}")
-    number_name = client.get_allergens(ENDPOINT)
-    code_name = client.get_mensas(ENDPOINT)
+    number_name = client.get_allergens(config.endpoint)
+    code_name = client.get_mensas(config.endpoint)
     myallergens = user_db.allergens_of(update.message.chat_id)
     mymensa = user_db.mensa_of(update.message.chat_id)
     subscribed = user_db.is_subscriber(update.message.chat_id)
@@ -146,9 +143,9 @@ def info_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def allergens_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: allergens_handler, chat_id: {update.message.chat_id}")
-    number_name = client.get_allergens(ENDPOINT)
+    number_name = client.get_allergens(config.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=f"A{number}")]
@@ -162,21 +159,19 @@ def allergens_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def resetallergens_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        f"Entering: resetallergens_handler, chat_id: {update.message.chat_id}"
-    )
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
     )
 
 
+@debug_logging
 def mensa_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: mensa_handler, chat_id: {update.message.chat_id}")
     text = " ".join(context.args)
     pattern = text.strip()
-    code_name = client.get_mensas(ENDPOINT, pattern)
+    code_name = client.get_mensas(config.endpoint, pattern)
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
@@ -190,12 +185,13 @@ def mensa_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
-            name = client.get_allergens(ENDPOINT)[allergen_number]
+            name = client.get_allergens(config.endpoint)[allergen_number]
             context.bot.answer_callback_query(
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
@@ -206,7 +202,7 @@ def callback_handler(update: Update, context: CallbackContext):
                 "Set {}.allergens to {}".format(query.message.chat_id, allergens)
             )
         else:
-            name = client.get_mensas(ENDPOINT)[int(query.data)]
+            name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
                 query.id,
                 text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
@@ -215,8 +211,8 @@ def callback_handler(update: Update, context: CallbackContext):
             logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
 
 
+@debug_logging
 def subscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"Entering: subscribe_handler, chat_id: {update.message.chat_id}")
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
         filter_text,
@@ -244,19 +240,12 @@ def subscribe_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_logging
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        ", ".join(
-            [
-                "Entering: status_handler",
-                f"chat_id: {update.message.chat_id}",
-                f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}",
-            ]
-        )
-    )
+    logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
-        logging.info("Unsubscribed {}".format(update.message.chat_id))
+        logging.info(f"Unsubscribed {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
         )
@@ -266,17 +255,8 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
         )
 
 
+@debug_logging
 def status_handler(update: Update, context: CallbackContext):
-    logging.debug(
-        ", ".join(
-            [
-                "Entering: status_handler",
-                f", chat_id: {update.message.chat_id}",
-                f", user_db.users(): {user_db.users()}",
-                f", user is_subscriber: {list(user for user in user_db.users() if user_db.is_subscriber(user))}",
-            ]
-        )
-    )
     context.bot.send_message(
         update.message.chat_id,
         f"Registered: {len(user_db.users())}\n"
@@ -284,12 +264,10 @@ def status_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
 def broadcast_handler(update: Update, context: CallbackContext):
-    """"For moderators only"""
-    logging.debug(
-        f"Entering: broadcast_handler, chat_id: {update.message.chat_id}, MODERATORS: {MODERATORS}"
-    )
-    if str(update.message.chat_id) not in MODERATORS:
+    logging.debug(f"MODERATORS: {config.moderators}")
+    if str(update.message.chat_id) not in config.moderators:
         logging.warning(
             f"{update.message.chat_id} tried to send a broadcast message, but is no moderator"
         )
@@ -324,28 +302,29 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
-    logging.debug(f"Leaving: broadcast_handler")
 
 
+@debug_logging
 def notify_subscribers(context: CallbackContext):
-    logging.debug("Entering: notify_subscribers")
     for user_id in user_db.users():
         if user_db.is_subscriber(user_id):
             logging.debug(f"Notify: {user_id}")
             filter_text = user_db.menu_filter_of(user_id) or ""
-            try:
-                send_menu(context.bot, user_id, Query.from_text(filter_text))
-            except Unauthorized:
-                logging.exception(
-                    f"{user_id} has blocked the bot. Removed Subscription."
-                )
-                user_db.set_subscription(user_id, False)
-                continue
-            except Exception as err:
-                logging.exception(f"Exception: {err}, skip user: {user_id}")
-                continue
+            for retries in range(5):
+                try:
+                    send_menu(context.bot, user_id, Query.from_text(filter_text))
+                except JSONDecodeError:
+                    logging.exception(f"JSONDecodeError: Try number {retries + 1} trying again, response")
+                    continue
+                except Unauthorized:
+                    logging.exception(
+                        f"{user_id} has blocked the bot. Removed Subscription."
+                    )
+                    user_db.set_subscription(user_id, False)
+                except Exception as err:
+                    logging.exception(f"Exception: {err}, skip user: {user_id}")
+                break
             sleep(1.0)
-    logging.debug("Leaving: notify_subscribers")
 
 
 def error_emoji() -> str:

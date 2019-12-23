@@ -1,8 +1,13 @@
+import logging
+import os
+import sys
+from datetime import time, datetime
 from typing import Set, Optional, List
 import redis
 
 
-class MenstruationConfig:
+class UserDatabase(object):
+
     def __init__(self, host: str) -> None:
         self.redis = redis.Redis(host, decode_responses=True)
 
@@ -46,3 +51,39 @@ class MenstruationConfig:
 
     def remove_user(self, user_id: int) -> int:
         return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
+
+
+try:
+    token = os.environ["MENSTRUATION_TOKEN"].strip()
+except KeyError:
+    print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    endpoint = os.environ["MENSTRUATION_ENDPOINT"]
+    if not endpoint:
+        raise KeyError
+except KeyError:
+    endpoint = "http://127.0.0.1:80"
+
+try:
+    redis_host = os.environ["MENSTRUATION_REDIS"]
+except KeyError:
+    redis_host = "localhost"
+
+notification_time: time = datetime.strptime(
+    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+).time()
+
+try:
+    moderators = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
+except KeyError:
+    moderators = []
+
+debug = "MENSTRUATION_DEBUG" in os.environ
+
+user_db = UserDatabase(redis_host)
+
+logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO
+    )
