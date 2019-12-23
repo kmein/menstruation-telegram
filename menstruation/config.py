@@ -6,12 +6,6 @@ from typing import Set, Optional, List
 import redis
 
 
-def set_logging_level(logging_level: logging):
-    logging.basicConfig(
-        level=logging_level
-    )
-
-
 class UserDatabase(object):
 
     def __init__(self, host: str) -> None:
@@ -90,4 +84,6 @@ debug = "MENSTRUATION_DEBUG" in os.environ
 
 user_db = UserDatabase(redis_host)
 
-set_logging_level(logging.DEBUG if debug else logging.INFO)
+logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO
+    )
