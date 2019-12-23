@@ -6,97 +6,46 @@ from typing import Set, Optional, List
 import redis
 
 
-class MenstruationConfig(object):
+def get_environment_args() -> dict:
 
-    def __init__(self) -> None:
-        args = self.get_environment_args()
-        self.__token: str = args['TOKEN']
-        self.__endpoint: str = args['ENDPOINT']
-        self.__redis_host: str = args['REDIS_HOST']
-        self.__moderators: list = args['MODERATORS']
-        self.__notification_time: time = args['NOTIFICATION_TIME']
-        self.__debug: bool = args['DEBUG']
-        self.user_db = UserDatabase(self.redis_host)
-        self.set_logging_level()
+    arguments = dict()
 
-    def get_token(self) -> str:
-        return self.__token
+    try:
+        arguments['TOKEN'] = os.environ["MENSTRUATION_TOKEN"].strip()
+    except KeyError:
+        print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
+        sys.exit(1)
 
-    def get_endpoint(self) -> str:
-        return self.__endpoint
+    try:
+        arguments['ENDPOINT'] = os.environ["MENSTRUATION_ENDPOINT"]
+        if not arguments['ENDPOINT']:
+            raise KeyError
+    except KeyError:
+        arguments['ENDPOINT'] = "http://127.0.0.1:80"
 
-    def get_redis_host(self) -> str:
-        return self.__redis_host
+    try:
+        arguments['REDIS_HOST'] = os.environ["MENSTRUATION_REDIS"]
+    except KeyError:
+        arguments['REDIS_HOST'] = "localhost"
 
-    def get_moderators(self) -> list:
-        return self.__moderators
+    arguments['NOTIFICATION_TIME']: time = datetime.strptime(
+        os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+    ).time()
 
-    def set_moderators(self, moderators: List) -> None:
-        self.__moderators = moderators
+    try:
+        arguments['MODERATORS'] = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
+    except KeyError:
+        arguments['MODERATORS'] = []
 
-    def add_moderator(self, moderator: str) -> None:
-        self.__moderators.append(moderator)
+    arguments['DEBUG'] = "MENSTRUATION_DEBUG" in os.environ
 
-    def get_notification_time(self) -> time:
-        return self.__notification_time
+    return arguments
 
-    def set_notification_time(self, new_time: time) -> None:
-        self.__notification_time = new_time
 
-    def get_debug(self) -> bool:
-        return self.__debug
-
-    def set_debug(self, debug: bool) -> None:
-        self.__debug = debug
-        self.set_logging_level()
-
-    token = property(get_token)
-    endpoint = property(get_endpoint)
-    redis_host = property(get_redis_host)
-    moderators = property(get_moderators, set_moderators)
-    notification_time = property(get_notification_time, set_notification_time)
-    debug = property(get_debug, set_debug)
-
-    def set_logging_level(self):
-        logging.basicConfig(
-            level=logging.DEBUG if self.__debug else logging.INFO
-        )
-
-    @staticmethod
-    def get_environment_args() -> dict:
-
-        args = dict()
-
-        try:
-            args['TOKEN'] = os.environ["MENSTRUATION_TOKEN"].strip()
-        except KeyError:
-            print("Please specify bot token in variable MENSTRUATION_TOKEN.", file=sys.stderr)
-            sys.exit(1)
-
-        try:
-            args['ENDPOINT'] = os.environ["MENSTRUATION_ENDPOINT"]
-            if not args['ENDPOINT']:
-                raise KeyError
-        except KeyError:
-            args['ENDPOINT'] = "http://127.0.0.1:80"
-
-        try:
-            args['REDIS_HOST'] = os.environ["MENSTRUATION_REDIS"]
-        except KeyError:
-            args['REDIS_HOST'] = "localhost"
-
-        args['NOTIFICATION_TIME']: time = datetime.strptime(
-            os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
-        ).time()
-
-        try:
-            args['MODERATORS'] = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
-        except KeyError:
-            args['MODERATORS'] = []
-
-        args['DEBUG'] = True if "MENSTRUATION_DEBUG" in os.environ else False
-
-        return args
+def set_logging_level(is_debug):
+    logging.basicConfig(
+        level=logging.DEBUG if is_debug else logging.INFO
+    )
 
 
 class UserDatabase(object):
@@ -146,4 +95,14 @@ class UserDatabase(object):
         return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
 
 
-menstruation_config = MenstruationConfig()
+args = get_environment_args()
+
+token: str = args['TOKEN']
+endpoint: str = args['ENDPOINT']
+redis_host: str = args['REDIS_HOST']
+moderators: list = args['MODERATORS']
+notification_time: time = args['NOTIFICATION_TIME']
+debug: bool = args['DEBUG']
+user_db = UserDatabase(redis_host)
+
+set_logging_level(debug)

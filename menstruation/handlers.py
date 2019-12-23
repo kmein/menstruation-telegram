@@ -15,8 +15,7 @@ import menstruation.client as client
 from menstruation import config
 from menstruation.query import Query
 
-conf = config.menstruation_config
-user_db = conf.user_db
+user_db = config.user_db
 
 
 def debug_handler(func):
@@ -79,7 +78,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     )
     if mensa_code is None:
         raise TypeError("No mensa selected")
-    json_object = client.get_json(conf.endpoint, mensa_code, query)
+    json_object = client.get_json(config.endpoint, mensa_code, query)
     reply = "".join(client.render_group(group) for group in json_object)
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
@@ -119,8 +118,8 @@ def menu_handler(update: Update, context: CallbackContext):
 
 @debug_handler
 def info_handler(update: Update, context: CallbackContext):
-    number_name = client.get_allergens(conf.endpoint)
-    code_name = client.get_mensas(conf.endpoint)
+    number_name = client.get_allergens(config.endpoint)
+    code_name = client.get_mensas(config.endpoint)
     myallergens = user_db.allergens_of(update.message.chat_id)
     mymensa = user_db.mensa_of(update.message.chat_id)
     subscribed = user_db.is_subscriber(update.message.chat_id)
@@ -143,7 +142,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 @debug_handler
 def allergens_handler(update: Update, context: CallbackContext):
-    number_name = client.get_allergens(conf.endpoint)
+    number_name = client.get_allergens(config.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=f"A{number}")]
@@ -169,7 +168,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
-    code_name = client.get_mensas(conf.endpoint, pattern)
+    code_name = client.get_mensas(config.endpoint, pattern)
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
@@ -188,7 +187,7 @@ def callback_handler(update: Update, context: CallbackContext):
     if query:
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
-            name = client.get_allergens(conf.endpoint)[allergen_number]
+            name = client.get_allergens(config.endpoint)[allergen_number]
             context.bot.answer_callback_query(
                 query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
             )
@@ -199,7 +198,7 @@ def callback_handler(update: Update, context: CallbackContext):
                 "Set {}.allergens to {}".format(query.message.chat_id, allergens)
             )
         else:
-            name = client.get_mensas(conf.endpoint)[int(query.data)]
+            name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
                 query.id,
                 text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
@@ -264,8 +263,8 @@ def status_handler(update: Update, context: CallbackContext):
 @debug_handler
 def broadcast_handler(update: Update, context: CallbackContext):
     """"For moderators only"""
-    logging.debug(f"MODERATORS: {conf.moderators}")
-    if str(update.message.chat_id) not in conf.moderators:
+    logging.debug(f"MODERATORS: {config.moderators}")
+    if str(update.message.chat_id) not in config.moderators:
         logging.warning(
             f"{update.message.chat_id} tried to send a broadcast message, but is no moderator"
         )
