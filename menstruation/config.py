@@ -42,9 +42,9 @@ def get_environment_args() -> dict:
     return arguments
 
 
-def set_logging_level(is_debug):
+def set_logging_level(logging_level: logging):
     logging.basicConfig(
-        level=logging.DEBUG if is_debug else logging.INFO
+        level=logging_level
     )
 
 
@@ -105,4 +105,4 @@ notification_time: time = args['NOTIFICATION_TIME']
 debug: bool = args['DEBUG']
 user_db = UserDatabase(redis_host)
 
-set_logging_level(debug)
+set_logging_level(logging.DEBUG if debug else logging.INFO)
