@@ -17,6 +17,7 @@ from menstruation.query import Query
 
 user_db = config.user_db
 
+
 def debug_logging(func):
     @functools.wraps(func)
     def wrapper_decorator(*args, **kwargs):
@@ -27,17 +28,15 @@ def debug_logging(func):
                 f"args: {args[1].args}"
             )
         except AttributeError:
-            logging.debug(
-                f"Entering: {func.__name__}"
-            )
+            logging.debug(f"Entering: {func.__name__}")
         func(*args, **kwargs)
         logging.debug(f"Exiting: {func.__name__}")
+
     return wrapper_decorator
 
 
 @debug_logging
 def help_handler(update: Update, context: CallbackContext):
-
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
 
@@ -78,9 +77,7 @@ def help_handler(update: Update, context: CallbackContext):
 def send_menu(bot: Bot, chat_id: int, query: Query):
     query.allergens = user_db.allergens_of(chat_id)
     mensa_code = user_db.mensa_of(chat_id)
-    logging.debug(
-        f"allergens: {query.allergens}, mensa_code: {mensa_code}"
-    )
+    logging.debug(f"allergens: {query.allergens}, mensa_code: {mensa_code}")
     if mensa_code is None:
         raise TypeError("No mensa selected")
     json_object = client.get_json(config.endpoint, mensa_code, query)
@@ -91,6 +88,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
         bot.send_message(
             chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
         )
+
 
 @debug_logging
 def menu_handler(update: Update, context: CallbackContext):
@@ -314,7 +312,9 @@ def notify_subscribers(context: CallbackContext):
                 try:
                     send_menu(context.bot, user_id, Query.from_text(filter_text))
                 except JSONDecodeError:
-                    logging.exception(f"JSONDecodeError: Try number {retries + 1} trying again, response")
+                    logging.exception(
+                        f"JSONDecodeError: Try number {retries + 1} trying again, response"
+                    )
                     continue
                 except Unauthorized:
                     logging.exception(
