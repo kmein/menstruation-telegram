@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from menstruation import config
+from menstruation import config, jobs
 
 from telegram.ext import (
     CommandHandler,
@@ -21,11 +21,9 @@ from menstruation.handlers import (
     status_handler,
     broadcast_handler,
     callback_handler,
-    notify_subscribers,
 )
 
 bot = Updater(token=config.token, use_context=True)
-job_queue = bot.job_queue
 
 bot.dispatcher.add_handler(CommandHandler("help", help_handler))
 bot.dispatcher.add_handler(CommandHandler("start", help_handler))
@@ -45,14 +43,8 @@ bot.dispatcher.add_handler(
 bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
 bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
+job_queue = bot.job_queue
+jobs.setup_job_queue(job_queue)
 
-job_queue.run_daily(
-    notify_subscribers,
-    config.notification_time,
-    days=(0, 1, 2, 3, 4),
-    name="notify_subscribers",
-)
-
-job_queue.start()
 bot.start_polling()
 bot.idle()

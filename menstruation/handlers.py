@@ -2,8 +2,6 @@
 import functools
 import logging
 import random
-from json import JSONDecodeError
-from time import sleep
 
 from emoji import emojize, demojize
 from telegram import Bot, Update
@@ -310,31 +308,6 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
-
-
-@debug_logging
-def notify_subscribers(context: CallbackContext):
-    for user_id in user_db.users():
-        if user_db.is_subscriber(user_id):
-            logging.debug(f"Notify: {user_id}")
-            filter_text = user_db.menu_filter_of(user_id) or ""
-            for retries in range(5):
-                try:
-                    send_menu(context.bot, user_id, Query.from_text(filter_text))
-                except JSONDecodeError:
-                    logging.exception(
-                        f"JSONDecodeError: Try number {retries + 1} trying again, response"
-                    )
-                    continue
-                except Unauthorized:
-                    logging.exception(
-                        f"{user_id} has blocked the bot. Removed Subscription."
-                    )
-                    user_db.set_subscription(user_id, False)
-                except Exception as err:
-                    logging.exception(f"Exception: {err}, skip user: {user_id}")
-                break
-            sleep(1.0)
 
 
 def error_emoji() -> str:
