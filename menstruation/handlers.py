@@ -255,11 +255,21 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 def status_handler(update: Update, context: CallbackContext):
-    context.bot.send_message(
-        update.message.chat_id,
-        f"Registered: {len(user_db.users())}\n"
-        f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}",
-    )
+    if str(update.message.chat_id) in config.moderators:
+        context.bot.send_message(
+            update.message.chat_id,
+            f"*User DB*\n"
+            f"Registered: {len(user_db.users())}\n"
+            f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}\n\n"
+            f"*Config*\n"
+            f"moderators: {', '.join(config.moderators)}\n"
+            f"notification time: {config.notification_time}\n"
+            f"debug: {config.debug}\n"
+            f"logging level: {logging.getLogger().getEffectiveLevel()}",
+            parse_mode="Markdown"
+        )
+    else:
+        help_handler(update, context)
 
 
 @debug_logging
