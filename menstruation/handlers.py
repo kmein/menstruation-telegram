@@ -11,6 +11,7 @@ from telegram.ext import CallbackContext, run_async
 
 import menstruation.client as client
 from menstruation import config
+from menstruation import jobs
 from menstruation.query import Query
 
 user_db = config.user_db
@@ -229,6 +230,8 @@ def subscribe_handler(update: Update, context: CallbackContext):
     else:
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
+        jobs.remove_subscriber(update.message.chat_id)
+        jobs.add_subscriber(update.message.chat_id)
         logging.info(
             "Subscribed {} for notification with filter '{}'".format(
                 update.message.chat_id, filter_text
@@ -250,6 +253,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
     logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
+        jobs.remove_subscriber(update.message.chat_id)
         logging.info(f"Unsubscribed {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
@@ -274,7 +278,9 @@ def status_handler(update: Update, context: CallbackContext):
             f"moderators: {', '.join(config.moderators)}\n"
             f"notification time: {config.notification_time.strftime('%H:%M')}\n"
             f"debug: {config.debug}\n"
-            f"logging level: {logging.getLogger().getEffectiveLevel()}",
+            f"logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
+            f"*Job Queue*\n"
+            f"{jobs.show_job_queue()}",
             parse_mode="Markdown"
         )
     else:
