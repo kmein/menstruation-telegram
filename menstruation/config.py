@@ -80,6 +80,13 @@ try:
 except KeyError:
     moderators = []
 
+try:
+    workers = int(os.environ["MENSTRUATION_WORKERS"])
+    if not workers:
+        raise KeyError
+except (KeyError, ValueError):
+    workers = 8
+
 debug = "MENSTRUATION_DEBUG" in os.environ
 
 user_db = UserDatabase(redis_host)

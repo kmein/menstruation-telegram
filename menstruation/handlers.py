@@ -7,7 +7,7 @@ from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import Unauthorized
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, run_async
 
 import menstruation.client as client
 from menstruation import config
@@ -34,6 +34,7 @@ def debug_logging(func):
 
 
 @debug_logging
+@run_async
 def help_handler(update: Update, context: CallbackContext):
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -89,6 +90,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
 
 
 @debug_logging
+@run_async
 def menu_handler(update: Update, context: CallbackContext):
     text = demojize("".join(context.args))
     try:
@@ -116,6 +118,7 @@ def menu_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def info_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     code_name = client.get_mensas(config.endpoint)
@@ -140,6 +143,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def allergens_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
@@ -156,6 +160,7 @@ def allergens_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def resetallergens_handler(update: Update, context: CallbackContext):
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
@@ -164,6 +169,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
@@ -182,6 +188,7 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
@@ -208,6 +215,7 @@ def callback_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def subscribe_handler(update: Update, context: CallbackContext):
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
@@ -237,6 +245,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def unsubscribe_handler(update: Update, context: CallbackContext):
     logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
@@ -252,6 +261,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def status_handler(update: Update, context: CallbackContext):
     if str(update.message.chat_id) in config.moderators:
         context.bot.send_message(
@@ -260,8 +270,9 @@ def status_handler(update: Update, context: CallbackContext):
             f"Registered: {len(user_db.users())}\n"
             f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}\n\n"
             f"*Config*\n"
+            f"workers: {config.workers}\n"
             f"moderators: {', '.join(config.moderators)}\n"
-            f"notification time: {config.notification_time}\n"
+            f"notification time: {config.notification_time.strftime('%H:%M')}\n"
             f"debug: {config.debug}\n"
             f"logging level: {logging.getLogger().getEffectiveLevel()}",
             parse_mode="Markdown"
@@ -271,6 +282,7 @@ def status_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def broadcast_handler(update: Update, context: CallbackContext):
     logging.debug(f"MODERATORS: {config.moderators}")
     if str(update.message.chat_id) not in config.moderators:

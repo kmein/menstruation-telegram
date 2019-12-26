@@ -23,7 +23,7 @@ from menstruation.handlers import (
     callback_handler,
 )
 
-bot = Updater(token=config.token, use_context=True)
+bot = Updater(token=config.token, use_context=True, workers=config.workers)
 
 bot.dispatcher.add_handler(CommandHandler("help", help_handler))
 bot.dispatcher.add_handler(CommandHandler("start", help_handler))
