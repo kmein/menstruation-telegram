@@ -266,6 +266,15 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 @run_async
+def chat_id_handler(update: Update, context: CallbackContext):
+    context.bot.send_message(
+        update.message.chat_id,
+        f"Deine Chat_ID ist die {update.message.chat_id}"
+    )
+
+
+@debug_logging
+@run_async
 def status_handler(update: Update, context: CallbackContext):
     if str(update.message.chat_id) in config.moderators:
         context.bot.send_message(
