@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 
 from menstruation import config, jobs
 
@@ -47,6 +48,8 @@ bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 
 job_queue = bot.job_queue
 jobs.setup_job_queue(job_queue)
+
+logging.info("Bot is ready")
 
 bot.start_polling()
 bot.idle()

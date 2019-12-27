@@ -37,26 +37,24 @@ def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
     response = requests.get(
         f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
     )
-    logging.info(f"Requesting {response.url}, status_code: {response.status_code}")
+    logging.debug(f"Requesting {response.url}, status_code: {response.status_code}")
     return response.json()
 
 
 def get_allergens(endpoint: str) -> Dict[str, str]:
     response = requests.get(f"{endpoint}/allergens")
-    logging.info("Requesting {}".format(response.url))
+    logging.debug(f"Requesting {response.url}")
     number_name = dict()
     for allergen in response.json()["items"]:
-        number = "{}{}".format(
-            allergen["number"],
-            allergen["index"] if allergen["index"] is not None else "",
-        )
+        number = f"{allergen['number']}" \
+                 f"{allergen['index'] if allergen['index'] is not None else ''}"
         number_name[number] = allergen["name"]
     return number_name
 
 
 def get_mensas(endpoint: str, pattern: str = "") -> Dict[int, str]:
     response = requests.get(f"{endpoint}/codes", params={"pattern": pattern})
-    logging.info("Requesting {}".format(response.url))
+    logging.debug(f"Requesting {response.url}")
     code_name = dict()
     for uni in response.json():
         for mensa in uni["items"]:

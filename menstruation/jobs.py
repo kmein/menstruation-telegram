@@ -19,7 +19,7 @@ job_queue = None
 def startup_message(context: CallbackContext):
     for moderator in config.moderators:
         try:
-            context.bot.send_message(moderator, emojize("Server wurde gestartet :thumbs_up:"))
+            context.bot.send_message(moderator, emojize("Server wurde gestartet :information:"))
         except Unauthorized:
             logging.exception(f"Moderator: {moderator}, has blocked the Bot.")
         except Exception as err:
