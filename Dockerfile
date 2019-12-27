@@ -1,6 +1,6 @@
 FROM python:3.7-alpine3.10
 
-ADD . /app/
+COPY . /app/
 
 ENV TZ=Europe/Berlin \
     MENSTRUATION_TOKEN='TOKEN' \
