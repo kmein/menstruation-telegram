@@ -9,10 +9,11 @@ from emoji import emojize, demojize
 from telegram import Bot, Update
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import Unauthorized
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, run_async
 
 import menstruation.client as client
 from menstruation import config
+from menstruation import jobs
 from menstruation.query import Query
 
 user_db = config.user_db
@@ -36,6 +37,7 @@ def debug_logging(func):
 
 
 @debug_logging
+@run_async
 def help_handler(update: Update, context: CallbackContext):
     def infos(mapping):
         return "\n".join(k + " – " + v for k, v in mapping.items())
@@ -86,38 +88,39 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
     else:
         bot.send_message(
-            chat_id, emojize("Kein Essen gefunden. {}".format(error_emoji()))
+            chat_id, emojize(f"Kein Essen gefunden. {error_emoji()}")
         )
 
 
 @debug_logging
+@run_async
 def menu_handler(update: Update, context: CallbackContext):
+    logging.info(f"{update.message.chat_id} asks for a menu")
     text = demojize("".join(context.args))
     try:
         send_menu(context.bot, update.message.chat_id, Query.from_text(text))
     except TypeError as e:
-        logging.warning(e)
+        logging.debug(e)
         context.bot.send_message(
             update.message.chat_id,
             emojize(
-                "Wie es aussieht, hast Du noch keine Mensa ausgewählt. {}\nTu dies zum Beispiel mit „/mensa adlershof“ :information:".format(
-                    error_emoji()
-                )
-            ),
+                f"Wie es aussieht, hast Du noch keine Mensa ausgewählt. {error_emoji()}\n"
+                f"Tu dies zum Beispiel mit „/mensa adlershof“ :information:"
+            )
         )
-    except ValueError as e:
-        logging.warning(e)
+    except (ValueError, JSONDecodeError) as e:
+        logging.debug(e)
         context.bot.send_message(
             update.message.chat_id,
             emojize(
-                "Entweder ist diese Mensa noch nicht unterstützt, {}\noder es gibt an diesem Tag dort kein Essen. {}".format(
-                    error_emoji(), error_emoji()
-                )
-            ),
+                f"Entweder ist diese Mensa noch nicht unterstützt, {error_emoji()}\n"
+                f"oder es gibt an diesem Tag dort kein Essen. {error_emoji()}"
+            )
         )
 
 
 @debug_logging
+@run_async
 def info_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     code_name = client.get_mensas(config.endpoint)
@@ -142,6 +145,7 @@ def info_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def allergens_handler(update: Update, context: CallbackContext):
     number_name = client.get_allergens(config.endpoint)
     allergens_chooser = InlineKeyboardMarkup(
@@ -158,7 +162,9 @@ def allergens_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def resetallergens_handler(update: Update, context: CallbackContext):
+    logging.info(f"Allergens reset for {update.message.chat_id}")
     user_db.reset_allergens_for(update.message.chat_id)
     context.bot.send_message(
         update.message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
@@ -166,10 +172,22 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
-    code_name = client.get_mensas(config.endpoint, pattern)
+    code_name = None
+    for retries in range(config.retries_api_failure):
+        try:
+            code_name = client.get_mensas(config.endpoint, pattern)
+            break
+        except JSONDecodeError:
+            logging.debug(f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}")
+            sleep(1)
+            continue
+    if code_name is None:
+        logging.exception(f"Failed to load code_names")
+        return
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
@@ -184,6 +202,7 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
@@ -197,19 +216,20 @@ def callback_handler(update: Update, context: CallbackContext):
             allergens.add(allergen_number)
             user_db.set_allergens_for(query.message.chat_id, allergens)
             logging.info(
-                "Set {}.allergens to {}".format(query.message.chat_id, allergens)
+                f"Set {query.message.chat_id} allergens to {allergens}"
             )
         else:
             name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
                 query.id,
-                text=emojize("„{}“ ausgewählt. :heavy_check_mark:".format(name)),
+                text=emojize(f"„{name}“ ausgewählt. :heavy_check_mark:"),
             )
             user_db.set_mensa_for(query.message.chat_id, query.data)
-            logging.info("Set {}.mensa to {}".format(query.message.chat_id, query.data))
+            logging.info(f"Set {query.message.chat_id} mensa to {query.data}")
 
 
 @debug_logging
+@run_async
 def subscribe_handler(update: Update, context: CallbackContext):
     filter_text = demojize("".join(context.args))
     is_refreshed = user_db.menu_filter_of(update.message.chat_id) not in [
@@ -223,13 +243,13 @@ def subscribe_handler(update: Update, context: CallbackContext):
     else:
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
+        jobs.remove_subscriber(update.message.chat_id)
+        jobs.add_subscriber(update.message.chat_id)
         logging.info(
-            "Subscribed {} for notification with filter '{}'".format(
-                update.message.chat_id, filter_text
-            )
+            f"Subscribed {update.message.chat_id} for notification with filter '{filter_text}'"
         )
         if is_refreshed:
-            logging.info("Subscription updated {}".format(update.message.chat_id))
+            logging.debug(f"Subscription updated {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id,
             "Du bekommst ab jetzt täglich den Speiseplan zugeschickt."
@@ -239,10 +259,13 @@ def subscribe_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
+@run_async
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
+    logging.debug(f"{update.message.chat_id} "
+                  f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
+        jobs.remove_subscriber(update.message.chat_id)
         logging.info(f"Unsubscribed {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
@@ -254,15 +277,40 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 
 
 @debug_logging
-def status_handler(update: Update, context: CallbackContext):
+@run_async
+def chat_id_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id,
-        f"Registered: {len(user_db.users())}\n"
-        f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}",
+        f"Deine Chat_ID ist die {update.message.chat_id}"
     )
 
 
 @debug_logging
+@run_async
+def status_handler(update: Update, context: CallbackContext):
+    if str(update.message.chat_id) in config.moderators:
+        context.bot.send_message(
+            update.message.chat_id,
+            f"*User DB*\n"
+            f"Registered: {len(user_db.users())}\n"
+            f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}\n\n"
+            f"*Config*\n"
+            f"workers: {config.workers}\n"
+            f"moderators: {', '.join(config.moderators)}\n"
+            f"notification time: {config.notification_time.strftime('%H:%M')}\n"
+            f"retries on api failure:{config.retries_api_failure}\n"
+            f"debug: {config.debug}\n"
+            f"logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
+            f"*Job Queue*\n"
+            f"{jobs.show_job_queue()}",
+            parse_mode="Markdown"
+        )
+    else:
+        help_handler(update, context)
+
+
+@debug_logging
+@run_async
 def broadcast_handler(update: Update, context: CallbackContext):
     logging.debug(f"MODERATORS: {config.moderators}")
     if str(update.message.chat_id) not in config.moderators:
@@ -284,13 +332,15 @@ def broadcast_handler(update: Update, context: CallbackContext):
         )
         return None
     emojized_text = emojize(text)
+    logging.info(f"Sending the following broadcast: {emojized_text}")
     for user_id in user_db.users():
         if user_id == update.message.chat_id:
-            logging.debug(f"Skipped {user_id}, text: {text}")
+            logging.debug(f"Skipped {user_id}")
             continue
         logging.debug(f"Send to {user_id}, text: {text}")
         try:
             context.bot.send_message(user_id, emojized_text)
+            logging.info(f"Broadcast successfully sent to {user_id}")
         except Unauthorized:
             logging.exception(
                 f"Skipped and removed {user_id}, because he blocked the bot"
@@ -300,31 +350,6 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
     )
-
-
-@debug_logging
-def notify_subscribers(context: CallbackContext):
-    for user_id in user_db.users():
-        if user_db.is_subscriber(user_id):
-            logging.debug(f"Notify: {user_id}")
-            filter_text = user_db.menu_filter_of(user_id) or ""
-            for retries in range(5):
-                try:
-                    send_menu(context.bot, user_id, Query.from_text(filter_text))
-                except JSONDecodeError:
-                    logging.exception(
-                        f"JSONDecodeError: Try number {retries + 1} trying again, response"
-                    )
-                    continue
-                except Unauthorized:
-                    logging.exception(
-                        f"{user_id} has blocked the bot. Removed Subscription."
-                    )
-                    user_db.set_subscription(user_id, False)
-                except Exception as err:
-                    logging.exception(f"Exception: {err}, skip user: {user_id}")
-                break
-            sleep(1.0)
 
 
 def error_emoji() -> str:
