@@ -11,5 +11,6 @@ setup(
     install_requires=["requests==2.22.0",
                       "emoji==0.5.3",
                       "python-telegram-bot==12.2",
-                      "redis==3.3.8"],
+                      "redis==3.3.8",
+                      "cachetools==4.0.0"],
 )

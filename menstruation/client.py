@@ -4,9 +4,10 @@ import requests
 from typing import Dict
 
 from menstruation.query import Color, Tag, Query
+from cachetools import cached, TTLCache
 
 
-def render_cents(total_cents):
+def render_cents(total_cents: int):
     euros = total_cents // 100
     cents = total_cents % 100
     return r"{},{:2} €".format(euros, cents)
@@ -33,14 +34,21 @@ def render_group(group):
         return ""
 
 
-def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
-    response = requests.get(
-        f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
-    )
+@cached(cache=TTLCache(maxsize=512, ttl=450))
+def get_json_cached(url: str):
+    response = requests.get(url=url)
     logging.debug(f"Requesting {response.url}, status_code: {response.status_code}")
     return response.json()
 
 
+def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
+    request = requests.Request(
+        'GET', f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
+    ).prepare()
+    return get_json_cached(request.url)
+
+
+@cached(cache=TTLCache(maxsize=1, ttl=3600))
 def get_allergens(endpoint: str) -> Dict[str, str]:
     response = requests.get(f"{endpoint}/allergens")
     logging.debug(f"Requesting {response.url}")
@@ -52,6 +60,7 @@ def get_allergens(endpoint: str) -> Dict[str, str]:
     return number_name
 
 
+@cached(cache=TTLCache(maxsize=64, ttl=3600))
 def get_mensas(endpoint: str, pattern: str = "") -> Dict[int, str]:
     response = requests.get(f"{endpoint}/codes", params={"pattern": pattern})
     logging.debug(f"Requesting {response.url}")
