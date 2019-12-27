@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import time, datetime
 from typing import Set, Optional, List
+
 import redis
 
 
@@ -79,6 +80,20 @@ try:
     moderators = list((os.environ["MENSTRUATION_MODERATORS"]).split(","))
 except KeyError:
     moderators = []
+
+try:
+    workers = int(os.environ["MENSTRUATION_WORKERS"])
+    if not workers:
+        raise KeyError
+except (KeyError, ValueError):
+    workers = 8
+
+try:
+    retries_api_failure = int(os.environ["MENSTRUATION_RETRIES"])
+    if not retries_api_failure:
+        raise KeyError
+except (KeyError, ValueError):
+    retries_api_failure = 5
 
 debug = "MENSTRUATION_DEBUG" in os.environ
 
