@@ -19,7 +19,7 @@ job_queue = None
 def startup_message(context: CallbackContext):
     for moderator in config.moderators:
         try:
-            context.bot.send_message(moderator, emojize("Server wurde gestartet :information:"))
+            context.bot.send_message(moderator, emojize("Server wurde gestartet :robot_face:"))
         except Unauthorized:
             logging.exception(f"Moderator: {moderator}, has blocked the Bot.")
         except Exception as err:
@@ -51,16 +51,17 @@ def notify_subscriber(context: CallbackContext):
         return
     logging.debug(f"Notify: {user_id}")
     filter_text = user_db.menu_filter_of(user_id) or ""
-    for retries in range(5):
+    users_sum = len(user_db.users())
+    for retries in range(config.retries_api_failure):
         try:
             send_menu(context.bot, user_id, Query.from_text(filter_text))
         except TypeError:
             logging.exception(f"{user_id} has no mensa selected")
         except JSONDecodeError:
-            logging.exception(
-                f"JSONDecodeError: Try number {retries + 1} trying again, response"
+            logging.debug(
+                f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}"
             )
-            sleep(randint(100, 500)/100)
+            sleep(randint(100, (200 + (200 * users_sum) / 100)))
             continue
         except Unauthorized:
             logging.exception(
@@ -68,7 +69,8 @@ def notify_subscriber(context: CallbackContext):
             )
             user_db.set_subscription(user_id, False)
         except Exception as err:
-            logging.exception(f"Exception: {err}, skip user: {user_id}")
+            logging.exception(f"Exception: {err}")
+        logging.exception(f"Menu for {user_id} could not be delivered")
         break
 
 

@@ -3,6 +3,7 @@ import functools
 import logging
 import random
 from json import JSONDecodeError
+from time import sleep
 
 from emoji import emojize, demojize
 from telegram import Bot, Update
@@ -175,7 +176,18 @@ def resetallergens_handler(update: Update, context: CallbackContext):
 def mensa_handler(update: Update, context: CallbackContext):
     text = " ".join(context.args)
     pattern = text.strip()
-    code_name = client.get_mensas(config.endpoint, pattern)
+    code_name = None
+    for retries in range(config.retries_api_failure):
+        try:
+            code_name = client.get_mensas(config.endpoint, pattern)
+            break
+        except JSONDecodeError:
+            logging.debug(f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}")
+            sleep(1)
+            continue
+    if code_name is None:
+        logging.exception(f"Failed to load code_names")
+        return
     mensa_chooser = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=name, callback_data=code)]
@@ -286,6 +298,7 @@ def status_handler(update: Update, context: CallbackContext):
             f"workers: {config.workers}\n"
             f"moderators: {', '.join(config.moderators)}\n"
             f"notification time: {config.notification_time.strftime('%H:%M')}\n"
+            f"retries on api failure:{config.retries_api_failure}\n"
             f"debug: {config.debug}\n"
             f"logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
             f"*Job Queue*\n"
