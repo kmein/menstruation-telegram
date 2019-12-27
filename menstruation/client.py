@@ -1,10 +1,10 @@
 import logging
-
-import requests
 from typing import Dict
 
-from menstruation.query import Color, Tag, Query
+import requests
 from cachetools import cached, TTLCache
+
+from menstruation.query import Color, Tag, Query
 
 
 def render_cents(total_cents: int):

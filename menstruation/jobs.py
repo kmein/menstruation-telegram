@@ -5,10 +5,9 @@ from time import sleep
 
 from emoji import emojize
 from telegram.error import Unauthorized
+from telegram.ext import CallbackContext, JobQueue
 
 from menstruation import config
-from telegram.ext import CallbackContext, JobQueue, Job
-
 from menstruation.handlers import send_menu
 from menstruation.query import Query
 
@@ -39,14 +38,13 @@ def add_subscriber(user_id: str):
 def remove_subscriber(user_id: str):
     logging.debug(f"Removed subscriber: {user_id}")
     for job in job_queue.get_jobs_by_name(user_id):
-        logging.debug(f"Job: {job.name}, {job.enabled}, {job.removed}")
         job.schedule_removal()
 
 
 def notify_subscriber(context: CallbackContext):
     user_id = context.job.name
     if not user_db.is_subscriber(user_id):
-        logging.error(f"{user_id} is no subscriber, but had an subscription job")
+        logging.error(f"{user_id} is no subscriber, but had a subscription job")
         remove_subscriber(user_id)
         return
     logging.debug(f"Notify: {user_id}")
@@ -61,7 +59,9 @@ def notify_subscriber(context: CallbackContext):
             logging.debug(
                 f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}"
             )
-            sleep(randint(100, (200 + (200 * users_sum) / 100)))
+            # Wait a random time and try again
+            max_time = 200 + (200 * users_sum)
+            sleep(randint(100, max_time) / 100)
             continue
         except Unauthorized:
             logging.exception(
@@ -86,7 +86,7 @@ def setup_job_queue(jq: JobQueue):
 
 
 def show_job_queue() -> str:
-    text = ""
-    for job in job_queue.jobs():
-        text += f"{job.name}: enabled: {job.enabled}, removed: {job.removed}\n"
+    text = "\n".join(f"{job.name}: "
+                     f"enabled: {job.enabled}, "
+                     f"removed: {job.removed}" for job in job_queue.jobs())
     return text

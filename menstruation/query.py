@@ -1,8 +1,8 @@
+import logging
+import re
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Optional, Set, Dict, Union, List
-from datetime import date, datetime, timedelta
-import re
-import logging
 
 
 class Color(Enum):

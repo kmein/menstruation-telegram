@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import time, datetime
 from typing import Set, Optional, List
+
 import redis
 
 
@@ -88,7 +89,7 @@ except (KeyError, ValueError):
     workers = 8
 
 try:
-    retries_api_failure = int(os.environ["MENSTRUATION_RETRIES_ON_API_FAILURE"])
+    retries_api_failure = int(os.environ["MENSTRUATION_RETRIES"])
     if not retries_api_failure:
         raise KeyError
 except (KeyError, ValueError):

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import logging
 
-from menstruation import config, jobs
-
 from telegram.ext import (
     CommandHandler,
     MessageHandler,
@@ -10,6 +8,8 @@ from telegram.ext import (
     Updater,
 )
 from telegram.ext.filters import Filters
+
+from menstruation import config, jobs
 from menstruation.handlers import (
     help_handler,
     menu_handler,
