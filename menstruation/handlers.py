@@ -243,8 +243,8 @@ def subscribe_handler(update: Update, context: CallbackContext):
     else:
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
-        jobs.remove_subscriber(update.message.chat_id)
-        jobs.add_subscriber(update.message.chat_id)
+        jobs.remove_subscriber(str(update.message.chat_id))
+        jobs.add_subscriber(str(update.message.chat_id))
         logging.info(
             f"Subscribed {update.message.chat_id} for notification with filter '{filter_text}'"
         )
@@ -265,7 +265,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
                   f"is_subscriber: {user_db.is_subscriber(update.message.chat_id)}")
     if user_db.is_subscriber(update.message.chat_id):
         user_db.set_subscription(update.message.chat_id, False)
-        jobs.remove_subscriber(update.message.chat_id)
+        jobs.remove_subscriber(str(update.message.chat_id))
         logging.info(f"Unsubscribed {update.message.chat_id}")
         context.bot.send_message(
             update.message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
@@ -298,7 +298,7 @@ def status_handler(update: Update, context: CallbackContext):
             f"Workers: {config.workers}\n"
             f"Moderators: {', '.join(config.moderators)}\n"
             f"Notification time: {config.notification_time.strftime('%H:%M')}\n"
-            f"Retries on api failure:{config.retries_api_failure}\n"
+            f"Retries on api failure: {config.retries_api_failure}\n"
             f"Debug: {config.debug}\n"
             f"Logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
             f"*Job Queue*\n"
