@@ -99,7 +99,7 @@ def show_job_time(user_id: Union[str, int]):
 
 def show_job_queue() -> str:
     text = "\n".join(f"{job.name}: "
-                     f"Enabled: {'T' if job.enabled else 'F'}, "
-                     f"Removed: {'T' if job.removed else 'F'}, "
+                     f"Enabled: {':thumbs_up:' if job.enabled else ':thumbs_down:'}, "
+                     f"Removed: {':thumbs_up:' if job.removed else ':thumbs_down:'}, "
                      f"Time: {show_job_time(job.name)}" for job in job_queue.jobs())
-    return text
+    return emojize(text)

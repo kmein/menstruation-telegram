@@ -19,7 +19,7 @@ from menstruation import jobs
 from menstruation.query import Query
 
 user_db = config.user_db
-TIME_PATTERN = r"([01][0-9]|2[0-3]|\s[0-9]):[0-5][0-9]"
+TIME_PATTERN = r"([01][0-9]|2[0-3]|[0-9]):[0-5][0-9]"
 
 
 def debug_logging(func):
@@ -141,7 +141,7 @@ def info_handler(update: Update, context: CallbackContext):
             allergens="\n".join(number_name[number] for number in myallergens),
             subscription=emojize(
                 (":thumbs_up:" if subscribed else ":thumbs_down:")
-                + f" ({subscription_filter} um {subscription_time} Uhr)"
+                + f" ({subscription_filter}) {subscription_time}"
             ),
         ),
         parse_mode=ParseMode.MARKDOWN,
@@ -247,11 +247,12 @@ def subscribe_handler(update: Update, context: CallbackContext):
     else:
         time_match = re.search(TIME_PATTERN, filter_text)
         if time_match:
+            time_match = time_match.group(0)
             user_db.set_subscription_time(
                 update.message.chat_id,
-                datetime.strptime(time_match.group(0), '%H:%M').time()
+                datetime.strptime(time_match, '%H:%M').time()
             )
-            filter_text = re.sub(TIME_PATTERN, '', filter_text)
+            filter_text = filter_text.replace(filter_text, '')
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
         jobs.remove_subscriber(str(update.message.chat_id))
