@@ -2,6 +2,8 @@
 import functools
 import logging
 import random
+import re
+from datetime import datetime
 from json import JSONDecodeError
 from time import sleep
 
@@ -17,6 +19,7 @@ from menstruation import jobs
 from menstruation.query import Query
 
 user_db = config.user_db
+TIME_PATTERN = r"([01][0-9]|2[0-3]|\s[0-9]):[0-5][0-9]"
 
 
 def debug_logging(func):
@@ -127,6 +130,7 @@ def info_handler(update: Update, context: CallbackContext):
     myallergens = user_db.allergens_of(update.message.chat_id)
     mymensa = user_db.mensa_of(update.message.chat_id)
     subscribed = user_db.is_subscriber(update.message.chat_id)
+    subscription_time = jobs.show_job_time(update.message.chat_id)
     subscription_filter = (
         user_db.menu_filter_of(update.message.chat_id) or "kein Filter"
     )
@@ -137,7 +141,7 @@ def info_handler(update: Update, context: CallbackContext):
             allergens="\n".join(number_name[number] for number in myallergens),
             subscription=emojize(
                 (":thumbs_up:" if subscribed else ":thumbs_down:")
-                + " ({})".format(subscription_filter)
+                + f" ({subscription_filter} um {subscription_time} Uhr)"
             ),
         ),
         parse_mode=ParseMode.MARKDOWN,
@@ -241,6 +245,13 @@ def subscribe_handler(update: Update, context: CallbackContext):
             update.message.chat_id, "Du hast den Speiseplan schon abonniert."
         )
     else:
+        time_match = re.search(TIME_PATTERN, filter_text)
+        if time_match:
+            user_db.set_subscription_time(
+                update.message.chat_id,
+                datetime.strptime(time_match.group(0), '%H:%M').time()
+            )
+            filter_text = re.sub(TIME_PATTERN, '', filter_text)
         user_db.set_subscription(update.message.chat_id, True)
         user_db.set_menu_filter(update.message.chat_id, filter_text)
         jobs.remove_subscriber(str(update.message.chat_id))
@@ -346,6 +357,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
                 f"Skipped and removed {user_id}, because he blocked the bot"
             )
             user_db.remove_user(user_id)
+            jobs.remove_subscriber(user_id)
             continue
     context.bot.send_message(
         update.message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")

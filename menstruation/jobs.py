@@ -2,6 +2,7 @@ import logging
 from json import JSONDecodeError
 from random import randint
 from time import sleep
+from typing import Union
 
 from emoji import emojize
 from telegram.error import Unauthorized
@@ -25,17 +26,21 @@ def startup_message(context: CallbackContext):
             logging.exception(f"Error in startup_message: {err}")
 
 
-def add_subscriber(user_id: str):
-    logging.debug(f"Added subscriber: {user_id}")
+def add_subscriber(user_id: Union[str, int]):
+    user_id = str(user_id)
+    user_time = user_db.subscription_time_of(user_id)
+    notification_time = user_time or config.notification_time
+    logging.debug(f"Added subscriber: {user_id}, time: {notification_time}")
     job_queue.run_daily(
         notify_subscriber,
-        config.notification_time,
+        notification_time,
         days=(0, 1, 2, 3, 4),
         name=user_id,
     )
 
 
-def remove_subscriber(user_id: str):
+def remove_subscriber(user_id: Union[str, int]):
+    user_id = str(user_id)
     logging.debug(f"Removed subscriber: {user_id}")
     for job in job_queue.get_jobs_by_name(user_id):
         job.schedule_removal()
@@ -68,6 +73,7 @@ def notify_subscriber(context: CallbackContext):
                 f"{user_id} has blocked the bot. Removed Subscription"
             )
             user_db.set_subscription(user_id, False)
+            remove_subscriber(user_id)
         except Exception as err:
             logging.exception(f"Exception: {err}")
         logging.exception(f"Menu for {user_id} could not be delivered")
@@ -85,8 +91,15 @@ def setup_job_queue(jq: JobQueue):
     job_queue.start()
 
 
+def show_job_time(user_id: Union[str, int]):
+    user_time = user_db.subscription_time_of(user_id)
+    job_time = user_time if user_time else config.notification_time
+    return job_time.strftime('%H:%M')
+
+
 def show_job_queue() -> str:
     text = "\n".join(f"{job.name}: "
-                     f"enabled: {job.enabled}, "
-                     f"removed: {job.removed}" for job in job_queue.jobs())
+                     f"Enabled: {'T' if job.enabled else 'F'}, "
+                     f"Removed: {'T' if job.removed else 'F'}, "
+                     f"Time: {show_job_time(job.name)}" for job in job_queue.jobs())
     return text
