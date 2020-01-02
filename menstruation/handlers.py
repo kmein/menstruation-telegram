@@ -252,7 +252,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
                 update.effective_message.chat_id,
                 datetime.strptime(time_match, '%H:%M').time()
             )
-            filter_text = filter_text.replace(filter_text, '')
+            filter_text = filter_text.replace(time_match, '')
         user_db.set_subscription(update.effective_message.chat_id, True)
         user_db.set_menu_filter(update.effective_message.chat_id, filter_text)
         jobs.remove_subscriber(str(update.effective_message.chat_id))
