@@ -365,6 +365,27 @@ def broadcast_handler(update: Update, context: CallbackContext):
     )
 
 
+@debug_logging
+@run_async
+def debug_handler(update: Update, context: CallbackContext):
+    if str(update.effective_message.chat_id) in config.moderators:
+        if config.debug:
+            config.debug = False
+            config.set_logging_level()
+            context.bot.send_message(
+                update.effective_message.chat_id, emojize("Debug deaktiviert. :zipper-mouth_face:")
+            )
+        else:
+            config.debug = True
+            config.set_logging_level()
+            context.bot.send_message(
+                update.effective_message.chat_id, emojize("Debug aktiviert. :wrench:")
+            )
+        logging.info(f"Logging-level ist nun {logging.getLogger().getEffectiveLevel()}")
+    else:
+        help_handler(update, context)
+
+
 def error_emoji() -> str:
     return random.choice(
         [
