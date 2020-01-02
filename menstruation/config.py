@@ -7,6 +7,16 @@ from typing import Set, Optional, List
 import redis
 
 
+def set_logging_level():
+    # reset root logging
+    for handler in logging.root.handlers:
+        logging.root.removeHandler(handler)
+
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO
+    )
+
+
 class UserDatabase(object):
 
     def __init__(self, host: str) -> None:
@@ -104,8 +114,6 @@ except (KeyError, ValueError):
 
 debug = "MENSTRUATION_DEBUG" in os.environ
 
-user_db = UserDatabase(redis_host)
+set_logging_level()
 
-logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO
-    )
+user_db = UserDatabase(redis_host)
