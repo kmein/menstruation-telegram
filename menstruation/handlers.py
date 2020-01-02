@@ -381,7 +381,7 @@ def debug_handler(update: Update, context: CallbackContext):
             context.bot.send_message(
                 update.effective_message.chat_id, emojize("Debug aktiviert. :wrench:")
             )
-        logging.info(f"Logging-level is now {logging.getLogger().getEffectiveLevel()}")
+        logging.info(f"Log level is now {logging.getLogger().getEffectiveLevel()}")
     else:
         help_handler(update, context)
 
