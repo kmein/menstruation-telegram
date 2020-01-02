@@ -8,8 +8,8 @@ import redis
 
 
 def set_logging_level():
-    # Remove all handlers associated with the root logger object.
-    for handler in logging.root.handlers[:]:
+    # reset root logging
+    for handler in logging.root.handlers:
         logging.root.removeHandler(handler)
 
     logging.basicConfig(
