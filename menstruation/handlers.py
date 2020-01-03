@@ -51,7 +51,8 @@ def help_handler(update: Update, context: CallbackContext):
         "/menu 2018-10-22": "Speiseangebote für den 22.10.2018.",
         "/help": "Dieser Hilfetext.",
         "/mensa beuth": "Auswahlmenü für die Mensen der Beuth Hochschule.",
-        "/subscribe": "Abonniere tägliche Benachrichtigungen der Speiseangebote.",
+        "/subscribe :carrot: 2€ 9:30": "Abonniere tägliche Benachrichtigungen der Speiseangebote "
+                                       "(vegetarisch bis 2€ um 9:30 Uhr).",
         "/unsubscribe": "Abonnement kündigen.",
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
@@ -70,9 +71,7 @@ def help_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.effective_message.chat_id,
         emojize(
-            "*BEFEHLE*\n{}\n\n*LEGENDE*\n{}".format(
-                infos(command_description), infos(emoji_description)
-            )
+            f"*BEFEHLE*\n{infos(command_description)}\n\n*LEGENDE*\n{infos(emoji_description)}"
         ),
         parse_mode=ParseMode.MARKDOWN,
     )
@@ -252,7 +251,7 @@ def subscribe_handler(update: Update, context: CallbackContext):
                 update.effective_message.chat_id,
                 datetime.strptime(time_match, '%H:%M').time()
             )
-            filter_text = filter_text.replace(filter_text, '')
+            filter_text = filter_text.replace(time_match, '')
         user_db.set_subscription(update.effective_message.chat_id, True)
         user_db.set_menu_filter(update.effective_message.chat_id, filter_text)
         jobs.remove_subscriber(str(update.effective_message.chat_id))
