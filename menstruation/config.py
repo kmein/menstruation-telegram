@@ -90,7 +90,7 @@ except KeyError:
     redis_host = "localhost"
 
 notification_time: time = datetime.strptime(
-    os.environ.get("MENSTRUATION_TIME", "09:00"), "%H:%M"
+    os.environ.get("MENSTRUATION_TIME", "11:00"), "%H:%M"
 ).time()
 
 try:
