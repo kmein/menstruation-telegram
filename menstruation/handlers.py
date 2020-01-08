@@ -57,7 +57,7 @@ def help_handler(update: Update, context: CallbackContext):
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
-        "/mode": "Auswählen, ob Du Student/in, Angestellte/r oder Gast bist",
+        "/mode": "Wähle aus, ob Du Student/in, Angestellte/r oder Gast bist.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
