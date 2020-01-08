@@ -1,8 +1,8 @@
+import logging
+import re
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Optional, Set, Dict, Union, List
-from datetime import date, datetime, timedelta
-import re
-import logging
 
 
 class Color(Enum):
@@ -109,10 +109,10 @@ class Query:
                     parsed_date = date.today() + timedelta(days=1)
                 elif matches.group(1):
                     parsed_date = datetime.strptime(matches.group(1), "%Y-%m-%d").date()
-                logging.info('Extracted {} from "{}"'.format(parsed_date, text))
+                logging.debug(f'Extracted {parsed_date} from "{text}"')
                 return parsed_date
             else:
-                logging.info("No date found in '{}'".format(text))
+                logging.debug(f"No date found in '{text}'")
                 return None
 
         max_price_result = re.search(r"(\d+,?\d*)\s?€", text)

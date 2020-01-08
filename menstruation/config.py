@@ -3,7 +3,18 @@ import os
 import sys
 from datetime import time, datetime
 from typing import Set, Optional, List
+
 import redis
+
+
+def set_logging_level():
+    # reset root logging
+    for handler in logging.root.handlers.copy():
+        logging.root.removeHandler(handler)
+
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO
+    )
 
 
 class UserDatabase(object):
@@ -40,6 +51,13 @@ class UserDatabase(object):
     def set_subscription(self, user_id: int, subscribed: bool) -> None:
         self.redis.hset(str(user_id), "subscribed", "yes" if subscribed else "no")
 
+    def subscription_time_of(self, user_id: int) -> datetime.time:
+        user_time = self.redis.hget(str(user_id), "subscription_time")
+        return datetime.strptime(user_time, '%H:%M').time() if user_time else None
+
+    def set_subscription_time(self, user_id: int, t: datetime.time) -> None:
+        self.redis.hset(str(user_id), "subscription_time", t.strftime('%H:%M'))
+
     def menu_filter_of(self, user_id: int) -> Optional[str]:
         return self.redis.hget(str(user_id), "menu_filter")
 
@@ -50,7 +68,7 @@ class UserDatabase(object):
         return [int(user_id_str) for user_id_str in self.redis.keys()]
 
     def remove_user(self, user_id: int) -> int:
-        return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'menu_filter')
+        return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'subscription_time', 'menu_filter')
 
 
 try:
@@ -80,10 +98,22 @@ try:
 except KeyError:
     moderators = []
 
+try:
+    workers = int(os.environ["MENSTRUATION_WORKERS"])
+    if not workers:
+        raise KeyError
+except (KeyError, ValueError):
+    workers = 8
+
+try:
+    retries_api_failure = int(os.environ["MENSTRUATION_RETRIES"])
+    if not retries_api_failure:
+        raise KeyError
+except (KeyError, ValueError):
+    retries_api_failure = 5
+
 debug = "MENSTRUATION_DEBUG" in os.environ
 
-user_db = UserDatabase(redis_host)
+set_logging_level()
 
-logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO
-    )
+user_db = UserDatabase(redis_host)
