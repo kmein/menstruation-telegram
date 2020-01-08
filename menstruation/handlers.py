@@ -338,17 +338,17 @@ def status_handler(update: Update, context: CallbackContext):
     if str(update.effective_message.chat_id) in config.moderators:
         context.bot.send_message(
             update.effective_message.chat_id,
-            f"*User DB*\n"
-            f"Registered: {len(user_db.users())}\n"
-            f"Subscribed: {len(list(user for user in user_db.users() if user_db.user_settings_of(user).subscribed))}\n\n"
-            f"*Config*\n"
-            f"Workers: {config.workers}\n"
-            f"Moderators: {', '.join(config.moderators)}\n"
-            f"Notification time: {config.notification_time.strftime('%H:%M')}\n"
-            f"Retries on api failure: {config.retries_api_failure}\n"
-            f"Debug: {config.debug}\n"
-            f"Logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
-            f"*Job Queue*\n"
+            f"*USER DB*\n"
+            f"Angemeldet – {len(user_db.users())}\n"
+            f"Abonniert – {len(list(user for user in user_db.users() if user_db.user_settings_of(user).subscribed))}\n\n"
+            f"*OPTIONEN*\n"
+            f"Workers – {config.workers}\n"
+            f"Moderatoren – {', '.join(config.moderators)}\n"
+            f"Benachrichtigungszeit – {config.notification_time.strftime('%H:%M')}\n"
+            f"Anfragen-Wiederholungen – {config.retries_api_failure}\n"
+            f"Debug – {config.debug}\n"
+            f"Loglevel – {logging.getLogger().getEffectiveLevel()}\n\n"
+            f"*JOB QUEUE*\n"
             f"{jobs.show_job_queue()}",
             parse_mode="Markdown",
         )
