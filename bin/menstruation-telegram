@@ -42,7 +42,6 @@ bot.dispatcher.add_handler(
 bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
 bot.dispatcher.add_handler(CommandHandler("chatid", chat_id_handler))
 bot.dispatcher.add_handler(CommandHandler("reset", reset_handler))
-bot.dispatcher.add_handler(CommandHandler("stop", reset_handler))
 bot.dispatcher.add_handler(CommandHandler("status", status_handler))
 bot.dispatcher.add_handler(
     CommandHandler("broadcast", broadcast_handler, pass_args=True)
