@@ -57,6 +57,7 @@ def help_handler(update: Update, context: CallbackContext):
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
+        "/mode": "Auswählen, ob Du Student/in, Angestellte/r oder Gast bist",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -82,11 +83,12 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     user_settings = user_db.user_settings_of(chat_id)
     query.allergens = user_settings.allergens
     mensa_code = user_settings.mensa
+    mode = user_settings.mode or "student"
     logging.debug(f"allergens: {query.allergens}, mensa_code: {mensa_code}")
     if mensa_code is None:
         raise TypeError("No mensa selected")
     json_object = client.get_json(config.endpoint, mensa_code, query)
-    reply = "".join(client.render_group(group) for group in json_object)
+    reply = "".join(client.render_group(group, mode) for group in json_object)
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
     else:
@@ -129,13 +131,16 @@ def info_handler(update: Update, context: CallbackContext):
     subscription_time = jobs.show_job_time(update.effective_message.chat_id)
     context.bot.send_message(
         update.effective_message.chat_id,
-        "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
+        "*MENSA*\n{mensa}\n\n*MODUS*\n{mode}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
             mensa=code_name[user_settings.mensa]
             if user_settings.mensa is not None
             else "keine",
             allergens="\n".join(
                 number_name[number] for number in user_settings.allergens
             ),
+            mode={"employee": "Angestellter", "guest": "Gast", "student": "Student"}[
+                user_settings.mode
+            ],
             subscription=emojize(
                 (":thumbs_up:" if user_settings.subscribed else ":thumbs_down:")
                 + f" ({(user_settings.menu_filter) or 'kein Filter'}) {subscription_time}"
@@ -207,6 +212,30 @@ def mensa_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 @run_async
+def mode_handler(update: Update, context: CallbackContext):
+    mode_chooser = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=name, callback_data="M" + code)
+                for code, name in (
+                    {
+                        "student": "Student/in",
+                        "employee": "Angestellte/r",
+                        "guest": "Gast",
+                    }
+                ).items()
+            ]
+        ]
+    )
+    context.bot.send_message(
+        update.effective_message.chat_id,
+        emojize("Was bist du? :index_pointing_up:"),
+        reply_markup=mode_chooser,
+    )
+
+
+@debug_logging
+@run_async
 def callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
@@ -220,6 +249,13 @@ def callback_handler(update: Update, context: CallbackContext):
             allergens.add(allergen_number)
             user_db.set_allergens_for(query.message.chat_id, allergens)
             logging.info(f"Set {query.message.chat_id} allergens to {allergens}")
+        elif query.data.startswith("M"):
+            mode_name = query.data.lstrip("M")
+            context.bot.answer_callback_query(
+                query.id, text=emojize(f"„{mode_name}” ausgewählt. :heavy_check_mark:")
+            )
+            user_db.set_mode_for(query.message.chat_id, mode_name)
+            logging.info(f"Set {query.message.chat_id} mode to {mode_name}")
         else:
             name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(

@@ -7,7 +7,14 @@ from typing import Set, List
 
 import redis
 
-USER_KEYS = ["mensa", "subscribed", "menu_filter", "subscription_time", "allergens"]
+USER_KEYS = [
+    "mensa",
+    "subscribed",
+    "menu_filter",
+    "subscription_time",
+    "allergens",
+    "mode",
+]
 
 User = namedtuple("User", USER_KEYS)
 
@@ -25,7 +32,7 @@ class UserDatabase(object):
         self.redis = redis.Redis(host, decode_responses=True)
 
     def user_settings_of(self, user_id: int) -> User:
-        mensa_str, subscribed_str, menu_filter_str, subscription_time_str, allergens_str = self.redis.hmget(
+        mensa_str, subscribed_str, menu_filter_str, subscription_time_str, allergens_str, mode_str = self.redis.hmget(
             str(user_id), USER_KEYS
         )
         return User(
@@ -40,6 +47,7 @@ class UserDatabase(object):
                 if subscription_time_str
                 else None
             ),
+            mode=mode_str or "student",
         )
 
     def set_allergens_for(self, user_id: int, allergens: Set[str]) -> None:
@@ -47,6 +55,9 @@ class UserDatabase(object):
 
     def reset_allergens_for(self, user_id: int) -> None:
         self.redis.hdel(str(user_id), "allergens")
+
+    def set_mode_for(self, user_id: int, mode: str) -> None:
+        self.redis.hset(str(user_id), "mode", mode)
 
     def set_mensa_for(self, user_id: int, mensa_str: str) -> None:
         self.redis.hset(str(user_id), "mensa", mensa_str)
@@ -64,9 +75,7 @@ class UserDatabase(object):
         return [int(user_id_str) for user_id_str in self.redis.keys()]
 
     def remove_user(self, user_id: int) -> int:
-        return self.redis.hdel(
-            str(user_id), "mensa", "subscribed", "subscription_time", "menu_filter"
-        )
+        return self.redis.hdel(str(user_id), *USER_KEYS)
 
 
 try:

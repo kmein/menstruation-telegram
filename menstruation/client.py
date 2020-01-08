@@ -13,10 +13,10 @@ def render_cents(total_cents: int):
     return r"{},{:2} €".format(euros, cents)
 
 
-def render_meal(meal):
+def render_meal(meal, mode: str) -> str:
     return "{color}{price} _{name}_ {tags}".format(
         color=Color.from_text(meal["color"]).value,
-        price=r" \[{}]".format(render_cents(meal["price"]["student"]))
+        price=r" \[{}]".format(render_cents(meal["price"][mode]))
         if meal["price"]
         else "",
         name=meal["name"],
@@ -24,11 +24,11 @@ def render_meal(meal):
     )
 
 
-def render_group(group):
+def render_group(group, mode: str) -> str:
     if group["items"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(render_meal(meal) for meal in group["items"]),
+            meals="\n".join(render_meal(meal, mode) for meal in group["items"]),
         )
     else:
         return ""
