@@ -298,6 +298,16 @@ def chat_id_handler(update: Update, context: CallbackContext):
 
 @debug_logging
 @run_async
+def reset_handler(update: Update, context: CallbackContext):
+    user_db.remove_user(update.effective_message.chat_id)
+    context.bot.send_message(
+        update.effective_message.chat_id,
+        emojize(f"Deine Daten wurden gelöscht. :white_heavy_check_mark: {error_emoji()}")
+    )
+
+
+@debug_logging
+@run_async
 def status_handler(update: Update, context: CallbackContext):
     if str(update.effective_message.chat_id) in config.moderators:
         context.bot.send_message(
