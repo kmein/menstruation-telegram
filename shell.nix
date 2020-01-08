@@ -4,7 +4,6 @@ in stdenv.mkDerivation rec {
   name = "menstruation";
 
   buildInputs = [
-    python36Packages.virtualenvwrapper
     libffi
     openssl
     (pkgs.writeShellScriptBin "telegram-test" ''
@@ -14,10 +13,6 @@ in stdenv.mkDerivation rec {
 
   shellHook = ''
     SOURCE_DATE_EPOCH=$(date +%s)
-    virtualenv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-
     ${pkgs.redis}/bin/redis-server >/dev/null &
   '';
 }
