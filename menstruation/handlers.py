@@ -129,7 +129,7 @@ def info_handler(update: Update, context: CallbackContext):
     subscription_time = jobs.show_job_time(update.effective_message.chat_id)
     context.bot.send_message(
         update.effective_message.chat_id,
-        "*MENSA*\n{user_settings.mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{user_settings.allergens}".format(
+        "*MENSA*\n{mensa}\n\n*ABO*\n{subscription}\n\n*ALLERGENE*\n{allergens}".format(
             mensa=code_name[user_settings.mensa]
             if user_settings.mensa is not None
             else "keine",
@@ -138,7 +138,7 @@ def info_handler(update: Update, context: CallbackContext):
             ),
             subscription=emojize(
                 (":thumbs_up:" if user_settings.subscribed else ":thumbs_down:")
-                + f" ({user_settings.menu_filter or 'kein Filter'}) {subscription_time}"
+                + f" ({(user_settings.menu_filter) or 'kein Filter'}) {subscription_time}"
             ),
         ),
         parse_mode=ParseMode.MARKDOWN,
