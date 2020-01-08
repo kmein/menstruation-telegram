@@ -1,10 +1,15 @@
 import logging
 import os
 import sys
+from collections import namedtuple
 from datetime import time, datetime
-from typing import Set, Optional, List
+from typing import Set, List
 
 import redis
+
+USER_KEYS = ["mensa", "subscribed", "menu_filter", "subscription_time", "allergens"]
+
+User = namedtuple("User", USER_KEYS)
 
 
 def set_logging_level():
@@ -12,22 +17,30 @@ def set_logging_level():
     for handler in logging.root.handlers.copy():
         logging.root.removeHandler(handler)
 
-    logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO
-    )
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
 
 class UserDatabase(object):
-
     def __init__(self, host: str) -> None:
         self.redis = redis.Redis(host, decode_responses=True)
 
-    def allergens_of(self, user_id: int) -> Set[str]:
-        value = self.redis.hget(str(user_id), "allergens")
-        if value is not None:
-            return set(value.split(","))
-        else:
-            return set()
+    def user_settings_of(self, user_id: int) -> User:
+        mensa_str, subscribed_str, menu_filter_str, subscription_time_str, allergens_str = self.redis.hmget(
+            str(user_id), USER_KEYS
+        )
+        return User(
+            subscribed=(subscribed_str == "yes"),
+            menu_filter=menu_filter_str,
+            allergens=set(allergens_str.split(","))
+            if allergens_str is not None
+            else set(),
+            mensa=int(mensa_str) if mensa_str is not None else None,
+            subscription_time=(
+                datetime.strptime(subscription_time_str, "%H:%M").time()
+                if subscription_time_str
+                else None
+            ),
+        )
 
     def set_allergens_for(self, user_id: int, allergens: Set[str]) -> None:
         self.redis.hset(str(user_id), "allergens", ",".join(allergens))
@@ -35,31 +48,14 @@ class UserDatabase(object):
     def reset_allergens_for(self, user_id: int) -> None:
         self.redis.hdel(str(user_id), "allergens")
 
-    def mensa_of(self, user_id: int) -> Optional[int]:
-        value = self.redis.hget(str(user_id), "mensa")
-        if value is not None:
-            return int(value)
-        else:
-            return None
-
     def set_mensa_for(self, user_id: int, mensa_str: str) -> None:
         self.redis.hset(str(user_id), "mensa", mensa_str)
-
-    def is_subscriber(self, user_id: int) -> bool:
-        return self.redis.hget(str(user_id), "subscribed") == "yes"
 
     def set_subscription(self, user_id: int, subscribed: bool) -> None:
         self.redis.hset(str(user_id), "subscribed", "yes" if subscribed else "no")
 
-    def subscription_time_of(self, user_id: int) -> datetime.time:
-        user_time = self.redis.hget(str(user_id), "subscription_time")
-        return datetime.strptime(user_time, '%H:%M').time() if user_time else None
-
     def set_subscription_time(self, user_id: int, t: datetime.time) -> None:
-        self.redis.hset(str(user_id), "subscription_time", t.strftime('%H:%M'))
-
-    def menu_filter_of(self, user_id: int) -> Optional[str]:
-        return self.redis.hget(str(user_id), "menu_filter")
+        self.redis.hset(str(user_id), "subscription_time", t.strftime("%H:%M"))
 
     def set_menu_filter(self, user_id: int, menu_filter: str) -> None:
         self.redis.hset(str(user_id), "menu_filter", menu_filter)
@@ -68,7 +64,9 @@ class UserDatabase(object):
         return [int(user_id_str) for user_id_str in self.redis.keys()]
 
     def remove_user(self, user_id: int) -> int:
-        return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'subscription_time', 'menu_filter')
+        return self.redis.hdel(
+            str(user_id), "mensa", "subscribed", "subscription_time", "menu_filter"
+        )
 
 
 try:
