@@ -5,7 +5,7 @@ from time import sleep
 from typing import Union
 
 from emoji import emojize
-from telegram.error import Unauthorized
+from telegram.error import Unauthorized, NetworkError
 from telegram.ext import CallbackContext, JobQueue
 
 from menstruation import config
@@ -58,9 +58,11 @@ def notify_subscriber(context: CallbackContext):
     for retries in range(config.retries_api_failure):
         try:
             send_menu(context.bot, user_id, Query.from_text(filter_text))
+            logging.info("Successfully notified %s" % user_id)
+            break
         except TypeError:
             logging.exception(f"{user_id} has no mensa selected")
-        except JSONDecodeError:
+        except (JSONDecodeError, NetworkError):
             logging.debug(
                 f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}"
             )
