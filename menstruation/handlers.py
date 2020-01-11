@@ -58,6 +58,7 @@ def help_handler(update: Update, context: CallbackContext):
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
         "/mode": "Wähle aus, ob Du Student/in, Angestellte/r oder Gast bist.",
+        "/reset": "Lösche Deine Nutzerdaten.",
     }
     emoji_description = {
         ":carrot:": "vegetarisch",
@@ -329,6 +330,16 @@ def chat_id_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.effective_message.chat_id,
         f"Deine Chat_ID ist die {update.effective_message.chat_id}",
+    )
+
+
+@debug_logging
+@run_async
+def reset_handler(update: Update, context: CallbackContext):
+    user_db.remove_user(update.effective_message.chat_id)
+    context.bot.send_message(
+        update.effective_message.chat_id,
+        emojize(f"Deine Daten wurden gelöscht. :white_heavy_check_mark: {error_emoji()}")
     )
 
 
