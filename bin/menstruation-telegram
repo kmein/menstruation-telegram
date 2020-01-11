@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 import logging
 
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    Updater,
-)
+from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Updater
 from telegram.ext.filters import Filters
 
 from menstruation import config, jobs
@@ -16,6 +11,7 @@ from menstruation.handlers import (
     mensa_handler,
     allergens_handler,
     info_handler,
+    mode_handler,
     resetallergens_handler,
     subscribe_handler,
     unsubscribe_handler,
@@ -33,6 +29,7 @@ bot.dispatcher.add_handler(CommandHandler("help", help_handler))
 bot.dispatcher.add_handler(CommandHandler("start", help_handler))
 bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
 bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
+bot.dispatcher.add_handler(CommandHandler("mode", mode_handler))
 bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
 bot.dispatcher.add_handler(CommandHandler("info", info_handler))
 bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))

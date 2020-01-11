@@ -3,3 +3,5 @@ venv/
 secret.nix
 dump.rdb
 __pycache__
+menstruation.egg-info
+build/

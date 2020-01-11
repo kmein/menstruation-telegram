@@ -13,10 +13,10 @@ def render_cents(total_cents: int):
     return r"{},{:2} €".format(euros, cents)
 
 
-def render_meal(meal):
+def render_meal(meal, mode: str) -> str:
     return "{color}{price} _{name}_ {tags}".format(
         color=Color.from_text(meal["color"]).value,
-        price=r" \[{}]".format(render_cents(meal["price"]["student"]))
+        price=r" \[{}]".format(render_cents(meal["price"][mode]))
         if meal["price"]
         else "",
         name=meal["name"],
@@ -24,11 +24,11 @@ def render_meal(meal):
     )
 
 
-def render_group(group):
+def render_group(group, mode: str) -> str:
     if group["items"]:
         return "*{name}*\n{meals}\n\n".format(
             name=group["name"].upper(),
-            meals="\n".join(render_meal(meal) for meal in group["items"]),
+            meals="\n".join(render_meal(meal, mode) for meal in group["items"]),
         )
     else:
         return ""
@@ -37,13 +37,13 @@ def render_group(group):
 @cached(cache=TTLCache(maxsize=512, ttl=450))
 def get_json_cached(url: str):
     response = requests.get(url=url)
-    logging.debug(f"Requesting {response.url}, status_code: {response.status_code}")
+    logging.debug("Requesting %s, status_code: %d", response.url, response.status_code)
     return response.json()
 
 
 def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
     request = requests.Request(
-        'GET', f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
+        "GET", f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
     ).prepare()
     return get_json_cached(request.url)
 
@@ -51,11 +51,13 @@ def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
 @cached(cache=TTLCache(maxsize=1, ttl=3600))
 def get_allergens(endpoint: str) -> Dict[str, str]:
     response = requests.get(f"{endpoint}/allergens")
-    logging.debug(f"Requesting {response.url}")
+    logging.debug("Requesting %s", response.url)
     number_name = dict()
     for allergen in response.json()["items"]:
-        number = f"{allergen['number']}" \
-                 f"{allergen['index'] if allergen['index'] is not None else ''}"
+        number = (
+            f"{allergen['number']}"
+            f"{allergen['index'] if allergen['index'] is not None else ''}"
+        )
         number_name[number] = allergen["name"]
     return number_name
 
@@ -63,7 +65,7 @@ def get_allergens(endpoint: str) -> Dict[str, str]:
 @cached(cache=TTLCache(maxsize=64, ttl=3600))
 def get_mensas(endpoint: str, pattern: str = "") -> Dict[int, str]:
     response = requests.get(f"{endpoint}/codes", params={"pattern": pattern})
-    logging.debug(f"Requesting {response.url}")
+    logging.debug("Requesting %s", response.url)
     code_name = dict()
     for uni in response.json():
         for mensa in uni["items"]:
