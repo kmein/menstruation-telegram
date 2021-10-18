@@ -169,7 +169,7 @@ def resetallergens_handler(update: Update, context: CallbackContext):
     user_db.reset_allergens_for(update.effective_message.chat_id)
     context.bot.send_message(
         update.effective_message.chat_id,
-        emojize("Allergene zurückgesetzt. :heavy_check_mark:"),
+        "Allergene zurückgesetzt.",
     )
 
 
@@ -213,9 +213,7 @@ def callback_handler(update: Update, context: CallbackContext):
         if query.data.startswith("A"):
             allergen_number = query.data.lstrip("A")
             name = client.get_allergens(config.endpoint)[allergen_number]
-            context.bot.answer_callback_query(
-                query.id, text=emojize(f"„{name}” ausgewählt. :heavy_check_mark:")
-            )
+            context.bot.answer_callback_query(query.id, text=f"„{name}” usgewählt.")
             allergens = user_db.allergens_of(query.message.chat_id)
             allergens.add(allergen_number)
             user_db.set_allergens_for(query.message.chat_id, allergens)
@@ -224,7 +222,7 @@ def callback_handler(update: Update, context: CallbackContext):
             name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
                 query.id,
-                text=emojize(f"„{name}“ ausgewählt. :heavy_check_mark:"),
+                text=f"„{name}“ ausgewählt.",
             )
             user_db.set_mensa_for(query.message.chat_id, query.data)
             logging.info(f"Set {query.message.chat_id} mensa to {query.data}")
