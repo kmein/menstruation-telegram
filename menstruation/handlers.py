@@ -52,7 +52,7 @@ def help_handler(update: Update, context: CallbackContext):
         "/help": "Dieser Hilfetext.",
         "/mensa beuth": "Auswahlmenü für die Mensen der Beuth Hochschule.",
         "/subscribe :carrot: 2€ 9:30": "Abonniere tägliche Benachrichtigungen der Speiseangebote "
-                                       "(vegetarisch bis 2€ um 9:30 Uhr).",
+        "(vegetarisch bis 2€ um 9:30 Uhr).",
         "/unsubscribe": "Abonnement kündigen.",
         "/allergens": "Allergene auswählen.",
         "/resetallergens": "Allergene zurücksetzen",
@@ -89,9 +89,7 @@ def send_menu(bot: Bot, chat_id: int, query: Query):
     if reply:
         bot.send_message(chat_id, emojize(reply), parse_mode=ParseMode.MARKDOWN)
     else:
-        bot.send_message(
-            chat_id, emojize(f"Kein Essen gefunden. {error_emoji()}")
-        )
+        bot.send_message(chat_id, emojize(f"Kein Essen gefunden. {error_emoji()}"))
 
 
 @debug_logging
@@ -107,8 +105,8 @@ def menu_handler(update: Update, context: CallbackContext):
             update.effective_message.chat_id,
             emojize(
                 f"Wie es aussieht, hast Du noch keine Mensa ausgewählt. {error_emoji()}\n"
-                f"Tu dies zum Beispiel mit „/mensa adlershof“ :information:"
-            )
+                f"Tu dies zum Beispiel mit „/mensa HU“ :information:"
+            ),
         )
     except (ValueError, JSONDecodeError) as e:
         logging.debug(e)
@@ -117,7 +115,7 @@ def menu_handler(update: Update, context: CallbackContext):
             emojize(
                 f"Entweder ist diese Mensa noch nicht unterstützt, {error_emoji()}\n"
                 f"oder es gibt an diesem Tag dort kein Essen. {error_emoji()}"
-            )
+            ),
         )
 
 
@@ -170,7 +168,8 @@ def resetallergens_handler(update: Update, context: CallbackContext):
     logging.info(f"Allergens reset for {update.effective_message.chat_id}")
     user_db.reset_allergens_for(update.effective_message.chat_id)
     context.bot.send_message(
-        update.effective_message.chat_id, emojize("Allergene zurückgesetzt. :heavy_check_mark:")
+        update.effective_message.chat_id,
+        emojize("Allergene zurückgesetzt. :heavy_check_mark:"),
     )
 
 
@@ -185,7 +184,9 @@ def mensa_handler(update: Update, context: CallbackContext):
             code_name = client.get_mensas(config.endpoint, pattern)
             break
         except JSONDecodeError:
-            logging.debug(f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}")
+            logging.debug(
+                f"JSONDecodeError: Try number {retries + 1} / {config.retries_api_failure}"
+            )
             sleep(1)
             continue
     if code_name is None:
@@ -218,9 +219,7 @@ def callback_handler(update: Update, context: CallbackContext):
             allergens = user_db.allergens_of(query.message.chat_id)
             allergens.add(allergen_number)
             user_db.set_allergens_for(query.message.chat_id, allergens)
-            logging.info(
-                f"Set {query.message.chat_id} allergens to {allergens}"
-            )
+            logging.info(f"Set {query.message.chat_id} allergens to {allergens}")
         else:
             name = client.get_mensas(config.endpoint)[int(query.data)]
             context.bot.answer_callback_query(
@@ -249,9 +248,9 @@ def subscribe_handler(update: Update, context: CallbackContext):
             time_match = time_match.group(0)
             user_db.set_subscription_time(
                 update.effective_message.chat_id,
-                datetime.strptime(time_match, '%H:%M').time()
+                datetime.strptime(time_match, "%H:%M").time(),
             )
-            filter_text = filter_text.replace(time_match, '')
+            filter_text = filter_text.replace(time_match, "")
         user_db.set_subscription(update.effective_message.chat_id, True)
         user_db.set_menu_filter(update.effective_message.chat_id, filter_text)
         jobs.remove_subscriber(str(update.effective_message.chat_id))
@@ -272,18 +271,22 @@ def subscribe_handler(update: Update, context: CallbackContext):
 @debug_logging
 @run_async
 def unsubscribe_handler(update: Update, context: CallbackContext):
-    logging.debug(f"{update.effective_message.chat_id} "
-                  f"is_subscriber: {user_db.is_subscriber(update.effective_message.chat_id)}")
+    logging.debug(
+        f"{update.effective_message.chat_id} "
+        f"is_subscriber: {user_db.is_subscriber(update.effective_message.chat_id)}"
+    )
     if user_db.is_subscriber(update.effective_message.chat_id):
         user_db.set_subscription(update.effective_message.chat_id, False)
         jobs.remove_subscriber(str(update.effective_message.chat_id))
         logging.info(f"Unsubscribed {update.effective_message.chat_id}")
         context.bot.send_message(
-            update.effective_message.chat_id, "Du hast den Speiseplan erfolgreich abbestellt."
+            update.effective_message.chat_id,
+            "Du hast den Speiseplan erfolgreich abbestellt.",
         )
     else:
         context.bot.send_message(
-            update.effective_message.chat_id, "Du hast den Speiseplan gar nicht abonniert."
+            update.effective_message.chat_id,
+            "Du hast den Speiseplan gar nicht abonniert.",
         )
 
 
@@ -292,7 +295,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 def chat_id_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.effective_message.chat_id,
-        f"Deine Chat_ID ist die {update.effective_message.chat_id}"
+        f"Deine Chat_ID ist die {update.effective_message.chat_id}",
     )
 
 
@@ -314,7 +317,7 @@ def status_handler(update: Update, context: CallbackContext):
             f"Logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
             f"*Job Queue*\n"
             f"{jobs.show_job_queue()}",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
     else:
         help_handler(update, context)
@@ -360,7 +363,8 @@ def broadcast_handler(update: Update, context: CallbackContext):
             jobs.remove_subscriber(user_id)
             continue
     context.bot.send_message(
-        update.effective_message.chat_id, emojize("Broadcast erfolgreich versendet. :thumbs_up:")
+        update.effective_message.chat_id,
+        emojize("Broadcast erfolgreich versendet. :thumbs_up:"),
     )
 
 
@@ -372,7 +376,8 @@ def debug_handler(update: Update, context: CallbackContext):
             config.debug = False
             config.set_logging_level()
             context.bot.send_message(
-                update.effective_message.chat_id, emojize("Debug deaktiviert. :zipper-mouth_face:")
+                update.effective_message.chat_id,
+                emojize("Debug deaktiviert. :zipper-mouth_face:"),
             )
         else:
             config.debug = True
