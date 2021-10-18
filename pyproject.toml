@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "menstruation"
+version = "0.1.0"
+description = ""
+authors = ["Kierán Meinhardt <kmein@posteo.de>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.26.0"
+emoji = "^1.6.1"
+python-telegram-bot = "^13.7"
+redis = "^3.5.3"
+cachetools = "^4.2.2"
+
+[tool.poetry.scripts]
+menstruation-telegram = "menstruation.bot:run"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
