@@ -3,3 +3,4 @@ venv/
 secret.nix
 dump.rdb
 __pycache__
+result
