@@ -20,7 +20,7 @@ def startup_message(context: CallbackContext):
     for moderator in config.moderators:
         try:
             context.bot.send_message(
-                moderator, emojize("Server wurde gestartet :robot_face:")
+                moderator, emojize("Server wurde gestartet :robot:")
             )
         except Unauthorized:
             logging.exception(f"Moderator: {moderator}, has blocked the Bot.")
