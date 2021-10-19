@@ -9,7 +9,7 @@ from telegram.error import Unauthorized, NetworkError
 from telegram.ext import CallbackContext, JobQueue
 
 from menstruation import config
-from menstruation.handlers import send_menu
+from menstruation.handlers import send_menu, error_emoji
 from menstruation.query import Query
 
 user_db = config.user_db
@@ -29,23 +29,28 @@ def startup_message(context: CallbackContext):
 
 
 def add_subscriber(user_id: Union[str, int]):
-    user_id = str(user_id)
-    user_time = user_db.subscription_time_of(user_id)
-    notification_time = user_time or config.notification_time
-    logging.debug(f"Added subscriber: {user_id}, time: {notification_time}")
-    job_queue.run_daily(
-        notify_subscriber,
-        notification_time,
-        days=tuple(range(5)),
-        name=user_id,
-    )
+    if job_queue:
+        user_id = int(user_id)
+        user_time = user_db.subscription_time_of(user_id)
+        notification_time = user_time or config.notification_time
+        logging.debug(f"Added subscriber: {user_id}, time: {notification_time}")
+        job_queue.run_daily(
+            notify_subscriber,
+            notification_time,
+            days=tuple(range(5)),
+            name=str(user_id),
+        )
+    else:
+        logging.error("Cannot add subscriber: job queue uninitialized")
 
 
 def remove_subscriber(user_id: Union[str, int]):
-    user_id = str(user_id)
-    logging.debug(f"Removed subscriber: {user_id}")
-    for job in job_queue.get_jobs_by_name(user_id):
-        job.schedule_removal()
+    if job_queue:
+        logging.debug(f"Removed subscriber: {user_id}")
+        for job in job_queue.get_jobs_by_name(str(user_id)):
+            job.schedule_removal()
+    else:
+        logging.error("Cannot remove subscriber: job queue uninitialized")
 
 
 def notify_subscriber(context: CallbackContext):
@@ -85,7 +90,7 @@ def notify_subscriber(context: CallbackContext):
 def setup_job_queue(jq: JobQueue):
     global job_queue
     job_queue = jq
-    # job_queue.run_once(startup_message, 0)
+    job_queue.run_once(startup_message, 0)
 
     for user_id in user_db.users():
         if user_db.is_subscriber(user_id):
@@ -94,17 +99,21 @@ def setup_job_queue(jq: JobQueue):
 
 
 def show_job_time(user_id: Union[str, int]):
+    user_id = int(user_id)
     user_time = user_db.subscription_time_of(user_id)
     job_time = user_time if user_time else config.notification_time
     return job_time.strftime("%H:%M")
 
 
 def show_job_queue() -> str:
-    text = "\n".join(
-        f"{job.name}: "
-        f"Enabled: {':thumbs_up:' if job.enabled else ':thumbs_down:'}, "
-        f"Removed: {':thumbs_up:' if job.removed else ':thumbs_down:'}, "
-        f"Time: {show_job_time(job.name)}"
-        for job in job_queue.jobs()
-    )
-    return emojize(text)
+    if job_queue:
+        text = "\n".join(
+            f"{job.name}: "
+            f"Enabled: {':thumbs_up:' if job.enabled else ':thumbs_down:'}, "
+            f"Removed: {':thumbs_up:' if job.removed else ':thumbs_down:'}, "
+            f"Time: {show_job_time(job.name)}"
+            for job in job_queue.jobs()
+        )
+        return emojize(text)
+    else:
+        return emojize(f"Job queue uninitialized! {error_emoji()}")

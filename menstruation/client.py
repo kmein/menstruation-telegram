@@ -42,10 +42,11 @@ def get_json_cached(url: str):
 
 
 def get_json(endpoint: str, mensa_code: int, query: Query) -> dict:
+    url = f"{endpoint}/menu"
     request = requests.Request(
-        'GET', f"{endpoint}/menu", params=dict(mensa=str(mensa_code), **query.params())
+        "GET", url, params=dict(mensa=str(mensa_code), **query.params())
     ).prepare()
-    return get_json_cached(request.url)
+    return get_json_cached(request.url or url)
 
 
 @cached(cache=TTLCache(maxsize=1, ttl=3600))
@@ -54,8 +55,10 @@ def get_allergens(endpoint: str) -> Dict[str, str]:
     logging.debug(f"Requesting {response.url}")
     number_name = dict()
     for allergen in response.json()["items"]:
-        number = f"{allergen['number']}" \
-                 f"{allergen['index'] if allergen['index'] is not None else ''}"
+        number = (
+            f"{allergen['number']}"
+            f"{allergen['index'] if allergen['index'] is not None else ''}"
+        )
         number_name[number] = allergen["name"]
     return number_name
 

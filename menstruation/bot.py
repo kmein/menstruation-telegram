@@ -28,25 +28,37 @@ from menstruation.handlers import (
 
 
 def run():
-    bot = Updater(token=config.token, use_context=True, workers=config.workers)
+    bot = Updater(token=config.token, workers=config.workers)
 
-    bot.dispatcher.add_handler(CommandHandler("help", help_handler))
-    bot.dispatcher.add_handler(CommandHandler("start", help_handler))
-    bot.dispatcher.add_handler(CommandHandler("menu", menu_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("mensa", mensa_handler, pass_args=True))
-    bot.dispatcher.add_handler(CommandHandler("allergens", allergens_handler))
-    bot.dispatcher.add_handler(CommandHandler("info", info_handler))
-    bot.dispatcher.add_handler(CommandHandler("resetallergens", resetallergens_handler))
+    bot.dispatcher.add_handler(CommandHandler("help", help_handler, run_async=True))
+    bot.dispatcher.add_handler(CommandHandler("start", help_handler, run_async=True))
     bot.dispatcher.add_handler(
-        CommandHandler("subscribe", subscribe_handler, pass_args=True)
+        CommandHandler("menu", menu_handler, pass_args=True, run_async=True)
     )
-    bot.dispatcher.add_handler(CommandHandler("unsubscribe", unsubscribe_handler))
-    bot.dispatcher.add_handler(CommandHandler("chatid", chat_id_handler))
-    bot.dispatcher.add_handler(CommandHandler("status", status_handler))
     bot.dispatcher.add_handler(
-        CommandHandler("broadcast", broadcast_handler, pass_args=True)
+        CommandHandler("mensa", mensa_handler, pass_args=True, run_async=True)
     )
-    bot.dispatcher.add_handler(CommandHandler("debug", debug_handler))
+    bot.dispatcher.add_handler(
+        CommandHandler("allergens", allergens_handler, run_async=True)
+    )
+    bot.dispatcher.add_handler(CommandHandler("info", info_handler, run_async=True))
+    bot.dispatcher.add_handler(
+        CommandHandler("resetallergens", resetallergens_handler, run_async=True)
+    )
+    bot.dispatcher.add_handler(
+        CommandHandler("subscribe", subscribe_handler, pass_args=True, run_async=True)
+    )
+    bot.dispatcher.add_handler(
+        CommandHandler("unsubscribe", unsubscribe_handler, run_async=True)
+    )
+    bot.dispatcher.add_handler(
+        CommandHandler("chatid", chat_id_handler, run_async=True)
+    )
+    bot.dispatcher.add_handler(CommandHandler("status", status_handler, run_async=True))
+    bot.dispatcher.add_handler(
+        CommandHandler("broadcast", broadcast_handler, pass_args=True, run_async=True)
+    )
+    bot.dispatcher.add_handler(CommandHandler("debug", debug_handler, run_async=True))
     bot.dispatcher.add_handler(CallbackQueryHandler(callback_handler))
     bot.dispatcher.add_handler(MessageHandler(Filters.command, help_handler))
 

@@ -12,13 +12,10 @@ def set_logging_level():
     for handler in logging.root.handlers.copy():
         logging.root.removeHandler(handler)
 
-    logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO
-    )
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
 
 class UserDatabase(object):
-
     def __init__(self, host: str) -> None:
         self.redis = redis.Redis(host, decode_responses=True)
 
@@ -51,12 +48,12 @@ class UserDatabase(object):
     def set_subscription(self, user_id: int, subscribed: bool) -> None:
         self.redis.hset(str(user_id), "subscribed", "yes" if subscribed else "no")
 
-    def subscription_time_of(self, user_id: int) -> datetime.time:
+    def subscription_time_of(self, user_id: int) -> Optional[time]:
         user_time = self.redis.hget(str(user_id), "subscription_time")
-        return datetime.strptime(user_time, '%H:%M').time() if user_time else None
+        return datetime.strptime(user_time, "%H:%M").time() if user_time else None
 
-    def set_subscription_time(self, user_id: int, t: datetime.time) -> None:
-        self.redis.hset(str(user_id), "subscription_time", t.strftime('%H:%M'))
+    def set_subscription_time(self, user_id: int, t: time) -> None:
+        self.redis.hset(str(user_id), "subscription_time", t.strftime("%H:%M"))
 
     def menu_filter_of(self, user_id: int) -> Optional[str]:
         return self.redis.hget(str(user_id), "menu_filter")
@@ -68,7 +65,9 @@ class UserDatabase(object):
         return [int(user_id_str) for user_id_str in self.redis.keys()]
 
     def remove_user(self, user_id: int) -> int:
-        return self.redis.hdel(str(user_id), 'mensa', 'subscribed', 'subscription_time', 'menu_filter')
+        return self.redis.hdel(
+            str(user_id), "mensa", "subscribed", "subscription_time", "menu_filter"
+        )
 
 
 try:
