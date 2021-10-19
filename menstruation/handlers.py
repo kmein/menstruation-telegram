@@ -57,6 +57,17 @@ def help_handler(update: Update, context: CallbackContext):
         "/resetallergens": "Allergene zurücksetzen",
         "/info": "Informationen über gewählte Mensa, Abonnement und Allergene.",
     }
+
+    if str(update.effective_message.chat_id) in config.moderators:
+        command_description.update(
+            {
+                "/status": "Systemstatus.",
+                "/debug": "Loglevel erhöhen/zurücksetzen.",
+                "/chatid": "Eigene Chat-ID anzeigen.",
+                "/broadcast": "Nachricht an alle User senden.",
+            }
+        )
+
     emoji_description = {
         ":carrot:": "vegetarisch",
         ":seedling:": "vegan",
@@ -283,7 +294,7 @@ def unsubscribe_handler(update: Update, context: CallbackContext):
 def chat_id_handler(update: Update, context: CallbackContext):
     context.bot.send_message(
         update.effective_message.chat_id,
-        f"Deine Chat_ID ist die {update.effective_message.chat_id}",
+        f"{update.effective_message.chat_id}",
     )
 
 
@@ -292,18 +303,17 @@ def status_handler(update: Update, context: CallbackContext):
     if str(update.effective_message.chat_id) in config.moderators:
         context.bot.send_message(
             update.effective_message.chat_id,
-            f"*User DB*\n"
-            f"Registered: {len(user_db.users())}\n"
-            f"Subscribed: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}\n\n"
-            f"*Config*\n"
-            f"Workers: {config.workers}\n"
-            f"Moderators: {', '.join(config.moderators)}\n"
-            f"Notification time: {config.notification_time.strftime('%H:%M')}\n"
-            f"Retries on api failure: {config.retries_api_failure}\n"
-            f"Debug: {config.debug}\n"
-            f"Logging level: {logging.getLogger().getEffectiveLevel()}\n\n"
-            f"*Job Queue*\n"
-            f"{jobs.show_job_queue()}",
+            f"*USER*\n"
+            f"Registriert: {len(user_db.users())}\n"
+            f"Abonniert: {len(list(user for user in user_db.users() if user_db.is_subscriber(user)))}\n\n"
+            f"*CONFIG*\n"
+            f"Worker: {config.workers}\n"
+            f"Moderatoren: {', '.join(config.moderators)}\n"
+            f"Abozeit: {config.notification_time.strftime('%H:%M')}\n"
+            f"API-Anfragen-Wiederholung: {config.retries_api_failure}\n"
+            f"Debug: {'ja' if config.debug else 'nein'}\n"
+            f"Loglevel: {logging.getLogger().getEffectiveLevel()}\n\n"
+            f"*ABONNEMENTS*\n{jobs.show_job_queue()}",
             parse_mode="Markdown",
         )
     else:

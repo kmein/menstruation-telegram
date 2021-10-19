@@ -20,7 +20,7 @@ def startup_message(context: CallbackContext):
     for moderator in config.moderators:
         try:
             context.bot.send_message(
-                moderator, emojize("Server wurde gestartet :robot:")
+                moderator, emojize("Server wurde gestartet. :robot:")
             )
         except Unauthorized:
             logging.exception(f"Moderator: {moderator}, has blocked the Bot.")
@@ -107,13 +107,7 @@ def show_job_time(user_id: Union[str, int]):
 
 def show_job_queue() -> str:
     if job_queue:
-        text = "\n".join(
-            f"{job.name}: "
-            f"Enabled: {':thumbs_up:' if job.enabled else ':thumbs_down:'}, "
-            f"Removed: {':thumbs_up:' if job.removed else ':thumbs_down:'}, "
-            f"Time: {show_job_time(job.name)}"
-            for job in job_queue.jobs()
-        )
+        text = "\n".join(f"*{job.name}* {job.next_t}" for job in job_queue.jobs())
         return emojize(text)
     else:
         return emojize(f"Job queue uninitialized! {error_emoji()}")
