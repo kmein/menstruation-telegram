@@ -36,7 +36,7 @@ def add_subscriber(user_id: Union[str, int]):
     job_queue.run_daily(
         notify_subscriber,
         notification_time,
-        days=range(5),
+        days=tuple(range(5)),
         name=user_id,
     )
 
