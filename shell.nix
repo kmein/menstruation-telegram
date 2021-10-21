@@ -5,7 +5,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = with pkgs; [
-    (pkgs.writeDashBin "run" ''
+    (pkgs.writers.writeDashBin "run" ''
       ( ${pkgs.redis}/bin/redis-server &
         ${menstruation}/bin/menstruation_server
       ) &
