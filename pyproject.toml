@@ -11,6 +11,7 @@ emoji = "^1.6.1"
 python-telegram-bot = "^13.7"
 redis = "^3.5.3"
 cachetools = "^4.2.2"
+pytz = "^2021.3"
 
 [tool.poetry.scripts]
 menstruation-telegram = "menstruation.bot:run"

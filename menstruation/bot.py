@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import logging
+import pytz
 
 from telegram.ext import (
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
     Updater,
+    Defaults,
 )
 from telegram.ext.filters import Filters
 
@@ -28,7 +30,11 @@ from menstruation.handlers import (
 
 
 def run():
-    bot = Updater(token=config.token, workers=config.workers)
+    bot = Updater(
+        token=config.token,
+        workers=config.workers,
+        defaults=Defaults(tzinfo=pytz.timezone("Europe/Berlin")),
+    )
 
     bot.dispatcher.add_handler(CommandHandler("help", help_handler, run_async=True))
     bot.dispatcher.add_handler(CommandHandler("start", help_handler, run_async=True))

@@ -207,7 +207,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1d2a33b223929e2a72a57fecf283c282427c89c7fbd8cdb32ffd38028d4c5b8a"
+content-hash = "84874c1d06c270aeaeccc737c974d16e6219b94d1422663ddcbdd9197c309934"
 
 [metadata.files]
 apscheduler = [
