@@ -39,6 +39,16 @@ class Tag(Enum):
     SUSTAINABLE_FISHING = ":fish:"
     CLIMATE_FRIENDLY = ":globe_showing_Americas:"
 
+    H2O_A = ""
+    H2O_B = ""
+    H2O_C = ""
+    H2O_D = ""
+
+    CO2_A = ""
+    CO2_B = ""
+    CO2_C = ""
+    CO2_D = ""
+
     @staticmethod
     def from_text(text: str) -> "Tag":
         if text == "vegetarian":
@@ -51,6 +61,22 @@ class Tag(Enum):
             return Tag.SUSTAINABLE_FISHING
         elif text == "climate friendly":
             return Tag.CLIMATE_FRIENDLY
+        elif text == "H2O A":
+            return Tag.H2O_A
+        elif text == "H2O B":
+            return Tag.H2O_B
+        elif text == "H2O C":
+            return Tag.H2O_C
+        elif text == "H2O D":
+            return Tag.H2O_D
+        elif text == "CO2 A":
+            return Tag.CO2_A
+        elif text == "CO2 B":
+            return Tag.CO2_B
+        elif text == "CO2 C":
+            return Tag.CO2_C
+        elif text == "CO2 D":
+            return Tag.CO2_D
         else:
             raise ValueError(f"{text} is no valid tag")
 
@@ -65,6 +91,22 @@ class Tag(Enum):
             return "sustainable fishing"
         elif self == Tag.CLIMATE_FRIENDLY:
             return "climate friendly"
+        elif self == Tag.H2O_A:
+            return "H2O A"
+        elif self == Tag.H2O_B:
+            return "H2O B"
+        elif self == Tag.H2O_C:
+            return "H2O C"
+        elif self == Tag.H2O_D:
+            return "H2O D"
+        elif self == Tag.CO2_A:
+            return "CO2 A"
+        elif self == Tag.CO2_B:
+            return "CO2 B"
+        elif self == Tag.CO2_C:
+            return "CO2 C"
+        elif self == Tag.CO2_D:
+            return "CO2 D"
         else:
             raise ValueError("unreachable")
 
