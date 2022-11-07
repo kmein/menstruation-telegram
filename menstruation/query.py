@@ -43,11 +43,13 @@ class Tag(Enum):
     H2O_B = ""
     H2O_C = ""
     H2O_D = ""
+    H2O_E = ""
 
     CO2_A = ""
     CO2_B = ""
     CO2_C = ""
     CO2_D = ""
+    CO2_E = ""
 
     @staticmethod
     def from_text(text: str) -> "Tag":
@@ -69,6 +71,8 @@ class Tag(Enum):
             return Tag.H2O_C
         elif text == "H2O D":
             return Tag.H2O_D
+        elif text == "H2O E":
+            return Tag.H2O_E
         elif text == "CO2 A":
             return Tag.CO2_A
         elif text == "CO2 B":
@@ -77,6 +81,8 @@ class Tag(Enum):
             return Tag.CO2_C
         elif text == "CO2 D":
             return Tag.CO2_D
+        elif text == "CO2 E":
+            return Tag.CO2_E
         else:
             raise ValueError(f"{text} is no valid tag")
 
@@ -99,6 +105,8 @@ class Tag(Enum):
             return "H2O C"
         elif self == Tag.H2O_D:
             return "H2O D"
+        elif self == Tag.H2O_E:
+            return "H2O E"
         elif self == Tag.CO2_A:
             return "CO2 A"
         elif self == Tag.CO2_B:
@@ -107,6 +115,8 @@ class Tag(Enum):
             return "CO2 C"
         elif self == Tag.CO2_D:
             return "CO2 D"
+        elif self == Tag.CO2_E:
+            return "CO2 E"
         else:
             raise ValueError("unreachable")
 
